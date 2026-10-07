@@ -69,8 +69,8 @@ gcloud sql connect postgres-db --user=postgres
 
 When connected, run the SQL files in order:
 
-1. [`sql-datastream-postgresql-replication-to-bigquery/01_create_sample_data.sql`](sql-datastream-postgresql-replication-to-bigquery/01_create_sample_data.sql)
-2. [`sql-datastream-postgresql-replication-to-bigquery/02_configure_logical_replication.sql`](sql-datastream-postgresql-replication-to-bigquery/02_configure_logical_replication.sql)
+1. [`sql/01_create_sample_data.sql`](sql/01_create_sample_data.sql)
+2. [`sql/02_configure_logical_replication.sql`](sql/02_configure_logical_replication.sql)
 
 The first file creates the `test` schema, sample table, and four starter rows. The second creates the publication and replication slot Datastream will use.
 
@@ -135,7 +135,7 @@ Reconnect to Cloud SQL if needed:
 gcloud sql connect postgres-db --user=postgres
 ```
 
-Run [`sql-datastream-postgresql-replication-to-bigquery/03_generate_source_changes.sql`](sql-datastream-postgresql-replication-to-bigquery/03_generate_source_changes.sql). It inserts three rows, updates `int_col` for all rows, and deletes the row with `text_col = 'abc'`.
+Run [`sql/03_generate_source_changes.sql`](sql/03_generate_source_changes.sql). It inserts three rows, updates `int_col` for all rows, and deletes the row with `text_col = 'abc'`.
 
 In BigQuery SQL workspace, query the replicated table:
 
