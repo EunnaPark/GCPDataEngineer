@@ -1,0 +1,461 @@
+Overview
+Storing and querying massive datasets can be time consuming and expensive without the right hardware and infrastructure. BigQuery is a serverless, highly scalable cloud data warehouse that solves this problem by enabling super-fast SQL queries using the processing power of Google's infrastructure. Simply move your data into BigQuery and let us handle the hard work. You can control access to both the project and your data based on your business needs, such as giving others the ability to view or query your data.
+
+You can access BigQuery by using the Console, Web UI or a command-line tool using a variety of client libraries such as Java, .NET, or Python. There are also a variety of solution providers that you can use to interact with BigQuery.
+
+This hands-on lab shows you how to use bq, the python-based command line tool for BigQuery, to query public tables and load sample data into BigQuery.
+
+What you'll do
+Query a public dataset
+Create a new dataset
+Load data into a new table
+Query a custom table
+
+Task 1. Examine a table
+BigQuery offers a number of sample tables that you can run queries against. In this lab, you'll run queries against the shakespeare table, which contains an entry for every word in every play.
+
+To examine the schema of the Shakespeare table in the samples dataset, run:
+
+bq show bigquery-public-data:samples.shakespeare
+Copied!
+In this command you're doing the following:
+
+bq to invoke the BigQuery command line tool
+show is the action
+Then you're listing the name of the project:public dataset.table in BigQuery that you want to see.
+Output:
+
+   Last modified                  Schema                 Total Rows   Total Bytes   Expiration   Time Partitioning   Clustered Fields   Labels
+ ----------------- ------------------------------------ ------------ ------------- ------------ ------------------- ------------------ --------
+  14 Mar 13:16:45   |- word: string (required)           164656       6432064
+                    |- word_count: integer (required)
+                    |- corpus: string (required)
+                    |- corpus_date: integer (required)
+Task 2. Run the help command
+When you include a command name with the help commands, you get information about that specific command.
+
+For example, the following call to bq help retrieves information about the query command:
+bq help query
+Copied!
+To see a list of all of the commands bq uses, run just bq help.
+Task 3. Run a query
+Now you'll run a query to see how many times the substring "raisin" appears in Shakespeare's works.
+
+To run a query, run the command bq query "[SQL_STATEMENT]":
+Escape any quotation marks inside the [SQL_STATEMENT] with a \ mark, or
+
+Use a different quotation mark type than the surrounding marks ("versus").
+
+Run the following standard SQL query in Cloud Shell to count the number of times that the substring "raisin" appears in all of Shakespeare's works:
+bq query --use_legacy_sql=false \
+'SELECT
+   word,
+   SUM(word_count) AS count
+ FROM
+   `bigquery-public-data`.samples.shakespeare
+ WHERE
+   word LIKE "%raisin%"
+ GROUP BY
+   word'
+Copied!
+In this command:
+
+--use_legacy_sql=false makes standard SQL the default query syntax.
+Output:
+
+Waiting on job_e19 ... (0s) Current status: DONE
++---------------+-------+
+|     word      | count |
++---------------+-------+
+| praising      |     8 |
+| Praising      |     4 |
+| raising       |     5 |
+| dispraising   |     2 |
+| dispraisingly |     1 |
+| raisins       |     1 |
+The table demonstrates that although the actual word raisin doesn't appear, the letters appear in order in several of Shakespeare's works.
+
+Test completed task
+Click Check my progress to verify your performed task. If you have successfully run a query against a public dataset, you will see an assessment score.
+
+Run a query (dataset: samples, table: shakespeare, substring: raisin)
+If you search for a word that isn't in Shakespeare's works, no results are returned.
+
+Run the following search for "huzzah", returns no matches:
+bq query --use_legacy_sql=false \
+'SELECT
+   word
+ FROM
+   `bigquery-public-data`.samples.shakespeare
+ WHERE
+   word = "huzzah"'
+Copied!
+Test completed task
+Click Check my progress to verify your performed task. If you have successfully run a query against a public dataset, you will see an assessment score.
+
+Run a query (dataset: samples, table: shakespeare, substring: huzzah)
+Task 4. Create a new table
+Now create your own table. Every table is stored inside a dataset. A dataset is a group of resources, such as tables and views.
+
+Create a new dataset
+Use the bq ls command to list any existing datasets in your project:
+bq ls
+Copied!
+You will be brought back to the command line since there aren't any datasets in your project yet.
+
+Run bq ls and the bigquery-public-data Project ID to list the datasets in that specific project, followed by a colon (:):
+bq ls bigquery-public-data:
+Copied!
+Output:
+
+           datasetId
+ -----------------------------
+  austin_311
+  austin_bikeshare
+  austin_crime
+  austin_incidents
+  austin_waste
+  baseball
+  bitcoin_blockchain
+  bls
+  census_bureau_construction
+  census_bureau_international
+  census_bureau_usa
+  census_utility
+  chicago_crime
+  ...
+Now create a dataset. A dataset name can be up to 1,024 characters long, and consist of A-Z, a-z, 0-9, and the underscore, but it cannot start with a number or underscore, or have spaces.
+
+Use the bq mk command to create a new dataset named babynames in your project:
+bq mk babynames
+Copied!
+Sample output:
+
+Dataset 'qwiklabs-gcp-ba3466847fe3cec0:babynames' successfully created.
+Test completed task
+Click Check my progress to verify your performed task. If you have successfully created a BigQuery dataset named babynames, you will see an assessment score.
+
+Create a new dataset (name: babynames)
+Run bq ls to confirm that the dataset now appears as part of your project:
+bq ls
+Copied!
+Sample output:
+
+ datasetId
+ -------------
+ babynames
+Upload the dataset
+Before you can build the table, you need to add the dataset to your project. The custom data file you'll use contains approximately 7 MB of data about popular baby names, provided by the US Social Security Administration.
+
+Run this command to add the baby names zip file to your project, using the URL for the data file:
+wget http://www.ssa.gov/OACT/babynames/names.zip
+Copied!
+List the file:
+ls
+Copied!
+You can see the name of the file added to your project.
+
+Now unzip the file:
+unzip names.zip
+Copied!
+That's a pretty big list of text files! List the files again:
+ls
+Copied!
+The bq load command creates or updates a table and loads data in a single step.
+
+You will use the bq load command to load your source file into a new table called names2010 in the babynames dataset you just created. By default, this runs synchronously, and will take a few seconds to complete.
+
+The bq load arguments you'll be running are:
+
+datasetID: babynames
+tableID: names2010
+source: yob2010.txt
+schema: name:string,gender:string,count:integer
+Create your table:
+bq load babynames.names2010 yob2010.txt name:string,gender:string,count:integer
+Copied!
+Sample output:
+
+Waiting on job_4f0c0878f6184119abfdae05f5194e65 ... (35s) Current status: DONE
+Test completed task
+Click Check my progress to verify your performed task. If you have successfully loaded data into a dataset table, you will see an assessment score.
+
+Load the data into a new table
+Run bq ls and babynames to confirm that the table now appears in your dataset:
+bq ls babynames
+Copied!
+Output:
+
+  tableId    Type
+ ----------- -------
+  names2010   TABLE
+Run bq show and your dataset.table to see the schema:
+bq show babynames.names2010
+Copied!
+Output:
+
+   Last modified         Schema         Total Rows   Total Bytes     Expiration      Time Partitioning   Clustered Fields   Labels
+ ----------------- ------------------- ------------ ------------- ----------------- ------------------- ------------------ --------
+  13 Aug 14:37:34   |- name: string     34073        654482        12 Oct 14:37:34
+                    |- gender: string
+                    |- count: integer
+Note: By default, when you load data, BigQuery expects UTF-8 encoded data. If you have data that is in ISO-8859-1 (or Latin-1) encoding and are having problems with your loaded data, you can tell BigQuery to treat your data as Latin-1 explicitly, using the -E flag. Learn more about Character Encodings from the Introduction to loading data guide.
+Task 5. Run queries
+Now you're ready to query the data and return some interesting results.
+
+Run the following command to return the top 5 most popular girls names:
+bq query "SELECT name,count FROM babynames.names2010 WHERE gender = 'F' ORDER BY count DESC LIMIT 5"
+Copied!
+Output:
+
+Waiting on job_58c0f5ca52764ef1902eba611b71c651 ... (0s) Current status: DONE
++----------+-------+
+|   name   | count |
++----------+-------+
+| Isabella | 22913 |
+| Sophia   | 20643 |
+| Emma     | 17345 |
+| Olivia   | 17028 |
+| Ava      | 15433 |
++----------+-------+
+Run the following command to see the top 5 most unusual boys names:
+bq query "SELECT name,count FROM babynames.names2010 WHERE gender = 'M' ORDER BY count ASC LIMIT 5"
+Copied!
+Note: The minimum count is 5 because the source data omits names with fewer than 5 occurrences.
+Output:
+
+Waiting on job_556ba2e5aad340a7b2818c3e3280b7a3 ... (1s) Current status: DONE
++----------+-------+
+|   name   | count |
++----------+-------+
+| Aaqib    |     5 |
+| Aaidan   |     5 |
+| Aadhavan |     5 |
+| Aarian   |     5 |
+| Aamarion |     5 |
++----------+-------+
+Test completed task
+Click Check my progress to verify your performed task. If you have successfully a against a custom dataset, you will see an assessment score.
+
+Run queries against your dataset table
+Task 6. Test your Understanding
+Below are multiple choice questions to reinforce your understanding of this lab's concepts. Answer them to the best of your abilities.
+
+
+You can access BigQuery using:
+
+GLib
+
+BigQuery REST API
+
+GStreamer
+
+Web UI
+
+Command line tool
+
+
+Which CLI tool is used to interact with BigQuery service?
+compute
+gcloud storage
+bq
+gcloud
+
+Task 7. Clean up
+Run the bq rm command to remove the babynames dataset with the -r flag to delete all tables in the dataset:
+bq rm -r babynames
+Copied!
+Confirm the delete command by typing Y
+
+
+
+
+-----------------------------------------------------------------------------------------
+bq query help list
+ frontend.command_query:
+                               --[no]allow_large_results: Enables larger destination table sizes for legacy SQL queries.
+                               --[no]append_table: When a destination table is specified, whether or not to append.
+                                 (default: 'false')
+                               --[no]batch: Whether to run the query in batch mode. Ignored if --priority flag is
+                                 specified.
+                               --clustering_fields: Comma-separated list of field names that specifies the columns on which
+                                 a table is clustered. To remove the clustering, set an empty value.
+                               --connection_property: Connection properties;
+                                 repeat this option to specify a list of values
+                               --[no]continuous: Whether to run the query as continuous query
+                                 (default: 'false')
+                               --[no]create_session: Whether to create a new session and run the query in the sesson.
+                               --destination_kms_key: Cloud KMS key for encryption of the destination table data.
+                               --destination_schema: Schema for the destination table. Either a filename or a comma-
+                                 separated list of fields in the form name[:type].
+                                 (default: '')
+                               --destination_table: Name of destination table for query results.
+                                 (default: '')
+                               --display_name: Display name for the created scheduled query configuration.
+                                 (default: '')
+                               --[no]dry_run: Whether the query should be validated without executing.
+                               --external_table_definition: Specifies a table name and either an inline table definition or
+                                 a path to a file containing a JSON table definition to use in the query. The format is
+                                 "table_name::path_to_file_with_json_def" or "table_name::schema@format=uri@connection".
+                                 For example, "--external_table_definition=Example::/tmp/example_table_def.txt" will define
+                                 a table named "Example" using the URIs and schema encoded in example_table_def.txt.;
+                                 repeat this option to specify a list of values
+                               --[no]flatten_results: Whether to flatten nested and repeated fields in the result schema
+                                 for legacy SQL queries. If not set, the default behavior is to flatten.
+                               --job_creation_mode: <job_creation_required|job_creation_optional>: An option on job
+                                 creation. Options include:
+                                 JOB_CREATION_REQUIRED
+                                 JOB_CREATION_OPTIONAL
+                                 Specifying JOB_CREATION_OPTIONAL may speed up the query if the query engine decides to
+                                 bypass job creation.
+                               --job_timeout_ms: Maximum time to run the entire script.
+                               --label: A label to set on a query job. The format is "key:value";
+                                 repeat this option to specify a list of values
+                               --max_child_jobs: Maximum number of child jobs to fetch results from after executing a
+                                 script.  If the number of child jobs exceeds this limit, only the final result will be
+                                 displayed.
+                                 (default: '1000')
+                                 (an integer)
+                               -n,--max_rows: How many rows to return in the result.
+                                 (default: '100')
+                                 (an integer)
+                               --max_slots: Cap on target rate of slot consumption by the query. Requires
+                                 --alpha=query_max_slots to be specified.
+                                 (an integer)
+                               --max_statement_results: Maximum number of script statements to display the results for.
+                                 (default: '100')
+                                 (an integer)
+                               --maximum_billing_tier: The upper limit of billing tier for the query.
+                                 (an integer)
+                               --maximum_bytes_billed: The upper limit of bytes billed for the query.
+                                 (an integer)
+                               --min_completion_ratio: [Experimental] The minimum fraction of data that must be scanned
+                                 before a query returns. If not set, the default server value (1.0) will be used.
+                                 (a number in the range [0, 1.0])
+                               --[no]no_auto_scheduling: Create a scheduled query configuration with automatic scheduling
+                                 disabled.
+                                 (default: 'false')
+                               --parameter: Either a file containing a JSON list of query parameters, or a query parameter
+                                 in the form "name:type:value". An empty name produces a positional parameter. The type may
+                                 be omitted to assume STRING: name::value or ::value. The value "NULL" produces a null
+                                 value.;
+                                 repeat this option to specify a list of values
+                               --priority: <HIGH|INTERACTIVE|BATCH>: Query priority. If not specified, priority is
+                                 determined using the --batch flag. Options include:
+                                 HIGH (only available for whitelisted reservations)
+                                 INTERACTIVE
+                                 BATCH
+                               --range_partitioning: Enables range partitioning on the table. The format should be
+                                 "field,start,end,interval". The table will be partitioned based on the value of the field.
+                                 Field must be a top-level, non-repeated INT64 field. Start, end, and interval are INT64
+                                 values defining the ranges.
+                               --[no]replace: If true, erase existing contents before loading new data.
+                                 (default: 'false')
+                               --[no]replace_data: If true, erase existing contents only, other table metadata like schema
+                                 is kept.
+                                 (default: 'false')
+                               --request_id: The request_id to use for the jobs.query request. Only valid when used in
+                                 combination with --rpc.
+                               --[no]require_cache: Whether to only run the query if it is already cached.
+                               --[no]require_partition_filter: Whether to require partition filter for queries over this
+                                 table. Only apply to partitioned table.
+                               --[no]rpc: If true, use rpc-style query API instead of jobs.insert().
+                                 (default: 'false')
+                               --schedule: Scheduled query schedule. If non-empty, this query requests could create a
+                                 scheduled query understand the customer project. See
+                                 https://cloud.google.com/appengine/docs/flexible/python/scheduling-jobs-with-cron-
+                                 yaml#the_schedule_format for the schedule format
+                               --schema_update_option: Can be specified when append to a table, or replace a table
+                                 partition. When specified, the schema of the destination table will be updated with the
+                                 schema of the new data. One or more of the following options can be specified:
+                                 ALLOW_FIELD_ADDITION: allow new fields to be added
+                                 ALLOW_FIELD_RELAXATION: allow relaxing required fields to nullable;
+                                 repeat this option to specify a list of values
+                               --script_statement_byte_budget: Maximum bytes that can be billed for any statement in a
+                                 script.
+                               --script_statement_timeout_ms: Maximum time to complete each statement in a script.
+                               --session_id: An existing session id where the query will be run.
+                               -s,--start_row: First row to return in the result.
+                                 (default: '0')
+                                 (an integer)
+                               --target_dataset: Target dataset used to create scheduled query.
+                               --time_partitioning_expiration: Enables time based partitioning on the table and sets the
+                                 number of seconds for which to keep the storage for the partitions in the table. The
+                                 storage in a partition will have an expiration time of its partition time plus this value.
+                                 (an integer)
+                               --time_partitioning_field: Enables time based partitioning on the table and the table will
+                                 be partitioned based on the value of this field. If time based partitioning is enabled
+                                 without this value, the table will be partitioned based on the loading time.
+                               --time_partitioning_type: Enables time based partitioning on the table and set the type. The
+                                 default value is DAY, which will generate one partition per day. Other supported values
+                                 are HOUR, MONTH, and YEAR.
+                               --udf_resource: The URI or local filesystem path of a code file to load and evaluate
+                                 immediately as a User-Defined Function resource.;
+                                 repeat this option to specify a list of values
+                               --[no]use_cache: Whether to use the query cache to avoid rerunning cached queries.
+                               --[no]use_legacy_sql: The choice of using Legacy SQL for the query is optional. If not
+                                 specified, the server will automatically determine the dialect based on query information,
+                                 such as dialect prefixes. If no prefixes are found, it will default to Legacy SQL.
+
+                             frontend.flags:
+                               --reservation_id: Reservation ID used when executing the job. Reservation should be in
+                                 theformat of project_id:reservation_id, project_id:location.reservation_id,or
+                                 reservation_id
+
+                             absl.flags:
+                               --flagfile: Insert flag definitions from the given file into the command line.
+                                 (default: '')
+                               --undefok: comma-separated list of flag names that it is okay to specify on the command line
+                                 even if the program does not define a flag with that name.  IMPORTANT: flags in this list
+                                 that have arguments MUST use the --flag=value format.
+                                 (default: '')
+
+
+
+student_02_3604b871429d@cloudshell:~ (qwiklabs-gcp-03-e5b26ad52b8b)$ 
+
+bq query --use_legacy_sql=true \
+'SELECT
+   word,
+   SUM(word_count) AS count
+ FROM
+   `bigquery-public-data`.samples.shakespeare
+ WHERE
+   word LIKE "%raisin%"
+ GROUP BY
+   word'
+BigQuery error in query operation: Error processing job 'qwiklabs-
+gcp-03-e5b26ad52b8b:bqjob_r22eb2985620f56cd_000001a11d3dcff9_1': Invalid project ID '`bigquery-public-data`'. Project IDs
+must contain 6-63 lowercase letters, digits, or dashes. Some project IDs also include domain name separated by a colon. IDs
+must start with a letter and may not end with a dash.
+
+bq query --use_legacy_sql=true \
+'SELECT
+   word,
+   SUM(word_count) AS count
+ FROM
+   'qwiklabs-gcp-03-e5b26ad52b8b'.'bigquery-public-data'.samples.shakespeare
+ WHERE
+   word LIKE "%raisin%"
+ GROUP BY
+   word'
+
+
+
+student_02_deb44a76409c@cloudshell:~ (qwiklabs-gcp-03-13905ba10109)$ bq query "SELECT name,count FROM babynames.names2010 WHERE gender = 'F' union all select name, count from babynames.names2025 where gender = 'F' ORDER BY count DESC LIMIT 10"
+Error in query string: Error processing job 'qwiklabs-gcp-03-13905ba10109:bqjob_r422195c85da70d3d_000001a11d5b3ff2_1': 1.1
+- 1.163: Unrecognized token UNION.
+[Try using standard SQL (https://cloud.google.com/bigquery/docs/reference/standard-sql/enabling-standard-sql)]
+
+bq query --use_legacy_sql=false \
+"SELECT name, count, '2010' as year
+ FROM babynames.names2010
+ WHERE gender = 'F'
+ UNION ALL
+ SELECT name, count , '2025' as year
+ FROM babynames.names2025
+ WHERE gender = 'F'
+ LIMIT 10"
+
+
+

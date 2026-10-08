@@ -1,0 +1,829 @@
+Use Serverless for Apache Spark to Load BigQuery
+
+
+Overview
+Serverless for Apache Spark is a fully-managed service that makes it easier to run open source data processing and analytics workloads without the need to manage infrastructure or manually tune workloads.
+
+Serverless for Spark provides an optimized environment designed to easily move existing Spark workloads to Google Cloud.
+
+In this lab you will run a Batch workload on the Serverless for Apache Spark environment. The workload will use a template to process an Avro file to create and load a BigQuery table.
+
+What you'll do
+Configure the environment
+Download lab assets
+Configure and execute the Spark code
+View data in BigQuery
+
+Task 1. Complete environment configuration tasks
+First, you're going to perform a few environment configuration tasks to support the execution of a Serverless for Apache Spark workload.
+
+In the Cloud Shell, run the following command to enable Private IP Access:
+gcloud compute networks subnets update default --region=us-east1 --enable-private-ip-google-access
+Use the following command to create a new Cloud Storage bucket as a staging location:
+gsutil mb -p  qwiklabs-gcp-03-60c9c1ea06a1 gs://qwiklabs-gcp-03-60c9c1ea06a1
+Use the following command to create a new Cloud Storage bucket as temporary location for BigQuery while it creates and loads a table:
+gsutil mb -p  qwiklabs-gcp-03-60c9c1ea06a1 gs://qwiklabs-gcp-03-60c9c1ea06a1-bqtemp
+Create a BQ dataset to store the data.
+bq mk -d  loadavro
+
+
+
+
+Task 2. Download lab assets
+Next, you're going to download a few assets necessary to complete the lab into lab provided Compute Engine VM. You will perform the rest of the steps in the lab inside the Compute Engine VM.
+
+From the Navigation menu click on Compute Engine. Here you'll see a linux VM provisioned for you. Click the SSH button next to the lab-vm instance.
+GCE VM Instance Page
+
+At the VM terminal prompt, download the Avro file that will be processed for storage in BigQuery.
+wget https://storage.googleapis.com/cloud-training/dataengineering/lab_assets/idegc/campaigns.avro
+Next, move the Avro file to the staging Cloud Storage bucket you created earlier.
+gcloud storage cp campaigns.avro gs://qwiklabs-gcp-03-60c9c1ea06a1
+Download an archive containing the Spark code to be executed against the Serverless environment.
+wget https://storage.googleapis.com/cloud-training/dataengineering/lab_assets/idegc/dataproc-templates.zip
+Extract the archive.
+unzip dataproc-templates.zip
+Change to the Python directory.
+cd dataproc-templates/python
+
+Task 3. Configure and execute the Spark code
+Next, you're going to set a few environment variables into VM instance terminal and execute a Spark template to load data into BigQuery.
+
+Set the following environment variables for the Serverless for Apache Spark environment.
+export GCP_PROJECT=qwiklabs-gcp-03-60c9c1ea06a1
+export REGION=us-east1
+export GCS_STAGING_LOCATION=gs://qwiklabs-gcp-03-60c9c1ea06a1
+export JARS=gs://cloud-training/dataengineering/lab_assets/idegc/spark-bigquery_2.12-20221021-2134.jar
+Run the following code to execute the Spark Cloud Storage to BigQuery template to load the Avro file in to BigQuery.
+./bin/start.sh \
+-- --template=GCSTOBIGQUERY \
+    --gcs.bigquery.input.format="avro" \
+    --gcs.bigquery.input.location="gs://qwiklabs-gcp-03-60c9c1ea06a1" \
+    --gcs.bigquery.input.inferschema="true" \
+    --gcs.bigquery.output.dataset="loadavro" \
+    --gcs.bigquery.output.table="campaigns" \
+    --gcs.bigquery.output.mode=overwrite\
+    --gcs.bigquery.temp.bucket.name="qwiklabs-gcp-03-60c9c1ea06a1-bqtemp"
+
+Task 4. Confirm that the data was loaded into BigQuery
+Now that you have successfully executed the Spark template, it is time to examine the results in BigQuery.
+
+View the data in the new table in BigQuery.
+bq query \
+ --use_legacy_sql=false \
+ 'SELECT * FROM `loadavro.campaigns`;'
+The query should return results similiar to the following:
+Example output:
+
++------------+--------+---------------------+--------+---------------------+----------+-----+
+| created_at | period |    campaign_name    | amount | advertising_channel | bid_type | id  |
++------------+--------+---------------------+--------+---------------------+----------+-----+
+| 2020-09-17 |     90 | NA - Video - Other  |     41 | Video               | CPC      |  81 |
+| 2021-01-19 |     30 | NA - Video - Promo  |    325 | Video               | CPC      | 137 |
+| 2021-06-28 |     30 | NA - Video - Promo  |     78 | Video               | CPC      | 214 |
+| 2021-03-15 |     30 | EU - Search - Brand |    465 | Search              | CPC      | 170 |
+| 2022-01-01 |     30 | EU - Search - Brand |     83 | Search              | CPC      | 276 |
+| 2020-02-18 |     30 | EU - Search - Brand |     30 | Search              | CPC      |  25 |
+| 2021-06-08 |     30 | EU - Search - Brand |    172 | Search              | CPC      | 201 |
+| 2020-11-29 |     60 | EU - Search - Other |     83 | Search              | CPC      | 115 |
+| 2021-09-11 |     30 | EU - Search - Other |     86 | Search              | CPC      | 237 |
+| 2022-02-17 |     30 | EU - Search - Other |     64 | Search              | CPC      | 296 |
++------------+--------+---------------------+--------+---------------------+----------+-----+
+
+
+
+----------SSH-in-browser--------------------------------------------------------------------------
+Linux lab-vm 6.1.0-53-cloud-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.1.187-1 (2026-09-07) x86_64
+
+The programs included with the Debian GNU/Linux system are free software;
+the exact distribution terms for each program are described in the
+individual files in /usr/share/doc/*/copyright.
+
+Debian GNU/Linux comes with ABSOLUTELY NO WARRANTY, to the extent
+permitted by applicable law.
+student_02_ba0f49082a7f@lab-vm:~$ wget https://storage.googleapis.com/cloud-training/dataengineering/lab_assets/idegc/campaigns.avro
+--2026-10-07 18:46:39--  https://storage.googleapis.com/cloud-training/dataengineering/lab_assets/idegc/campaigns.avro
+Resolving storage.googleapis.com (storage.googleapis.com)... 142.251.107.207, 173.194.210.207, 173.194.217.207, ...
+Connecting to storage.googleapis.com (storage.googleapis.com)|142.251.107.207|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 1067 (1.0K) [application/octet-stream]
+Saving to: ‘campaigns.avro’
+
+campaigns.avro              100%[===========================================>]   1.04K  --.-KB/s    in 0s      
+
+2026-10-07 18:46:39 (12.0 MB/s) - ‘campaigns.avro’ saved [1067/1067]
+
+student_02_ba0f49082a7f@lab-vm:~$ gcloud storage cp campaigns.avro gs://qwiklabs-gcp-03-60c9c1ea06a1
+Copying file://campaigns.avro to gs://qwiklabs-gcp-03-60c9c1ea06a1/campaigns.avro
+  Completed files 1/1 | 1.0kiB/1.0kiB                                                                          
+student_02_ba0f49082a7f@lab-vm:~$ wget https://storage.googleapis.com/cloud-training/dataengineering/lab_assets/idegc/dataproc-templates.zip
+--2026-10-07 18:47:44--  https://storage.googleapis.com/cloud-training/dataengineering/lab_assets/idegc/dataproc-templates.zip
+Resolving storage.googleapis.com (storage.googleapis.com)... 173.194.215.207, 173.194.216.207, 108.177.11.207, ...
+Connecting to storage.googleapis.com (storage.googleapis.com)|173.194.215.207|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 22294152 (21M) [application/zip]
+Saving to: ‘dataproc-templates.zip’
+
+dataproc-templates.zip      100%[===========================================>]  21.26M  67.9MB/s    in 0.3s    
+
+2026-10-07 18:47:45 (67.9 MB/s) - ‘dataproc-templates.zip’ saved [22294152/22294152]
+
+student_02_ba0f49082a7f@lab-vm:~$ unzip dataproc-templates.zip
+Archive:  dataproc-templates.zip
+   creating: dataproc-templates/
+  inflating: dataproc-templates/CODE_OF_CONDUCT.md  
+   creating: dataproc-templates/airflow/
+   creating: dataproc-templates/airflow/tests/
+   creating: dataproc-templates/airflow/tests/dags/
+  inflating: dataproc-templates/airflow/tests/dags/test_submit_pyspark_dataproc_template.py  
+  inflating: dataproc-templates/airflow/tests/dags/test_submit_spark_dataproc_template.py  
+  inflating: dataproc-templates/airflow/tests/test_integrity.py  
+   creating: dataproc-templates/airflow/tests/test_util/
+  inflating: dataproc-templates/airflow/tests/test_util/helper_functions.py  
+   creating: dataproc-templates/airflow/dags/
+   creating: dataproc-templates/airflow/dags/config/
+  inflating: dataproc-templates/airflow/dags/config/submit_pyspark_dataproc_template.ini  
+  inflating: dataproc-templates/airflow/dags/config/submit_spark_dataproc_template.ini  
+  inflating: dataproc-templates/airflow/dags/submit_spark_dataproc_template.py  
+  inflating: dataproc-templates/airflow/dags/submit_pyspark_dataproc_template.py  
+  inflating: dataproc-templates/airflow/README.md  
+   creating: dataproc-templates/.kokoro/
+  inflating: dataproc-templates/.kokoro/requirements.in  
+   creating: dataproc-templates/.kokoro/release/
+  inflating: dataproc-templates/.kokoro/release/common.cfg  
+  inflating: dataproc-templates/.kokoro/release/release.cfg  
+  inflating: dataproc-templates/.kokoro/trampoline.sh  
+  inflating: dataproc-templates/.kokoro/requirements.txt  
+  inflating: dataproc-templates/.kokoro/populate-secrets.sh  
+  inflating: dataproc-templates/.kokoro/trampoline_v2.sh  
+  inflating: dataproc-templates/.kokoro/release.sh  
+   creating: dataproc-templates/java/
+  inflating: dataproc-templates/java/JAVA_LICENSE_HEADER  
+   creating: dataproc-templates/java/.ci/
+  inflating: dataproc-templates/java/.ci/Jenkinsfile  
+  inflating: dataproc-templates/java/.gitignore  
+   creating: dataproc-templates/java/bin/
+  inflating: dataproc-templates/java/bin/dataproc_template_functions.sh  
+  inflating: dataproc-templates/java/bin/start.sh  
+   creating: dataproc-templates/java/src/
+   creating: dataproc-templates/java/src/test/
+   creating: dataproc-templates/java/src/test/java/
+   creating: dataproc-templates/java/src/test/java/com/
+   creating: dataproc-templates/java/src/test/java/com/google/
+   creating: dataproc-templates/java/src/test/java/com/google/cloud/
+   creating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/
+   creating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/
+   creating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/hbase/
+  inflating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/hbase/HbaseToGCSTest.java  
+   creating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/hive/
+  inflating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/hive/HiveToGCSTest.java  
+  inflating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/hive/HiveToBigQueryTest.java  
+   creating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/s3/
+  inflating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/s3/S3ToBigQueryTest.java  
+   creating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/pubsub/
+  inflating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/pubsub/PubSubToBQTest.java  
+  inflating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/pubsub/PubSubToBigTableTest.java  
+  inflating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/pubsub/PubSubToGCSTest.java  
+   creating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/gcs/
+  inflating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/gcs/GCStoBigqueryTest.java  
+  inflating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/gcs/GCSToSpannerTest.java  
+  inflating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/gcs/GCStoBigTableTest.java  
+  inflating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/gcs/GCStoJDBCTest.java  
+  inflating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/gcs/GCStoGCSTest.java  
+  inflating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/gcs/GCStoMongoTest.java  
+  inflating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/gcs/TextToBigqueryTest.java  
+   creating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/config/
+  inflating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/config/InputConfigTest.java  
+  inflating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/config/OutputConfigTest.java  
+  inflating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/config/GeneralTemplateConfigTest.java  
+  inflating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/config/QueryConfigTest.java  
+   creating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/main/
+  inflating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/main/DataProcTemplateTest.java  
+  inflating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/main/GCSToBigTableHFileTest.java  
+   creating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/pubsublite/
+  inflating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/pubsublite/PubSubLiteToBigTableTest.java  
+   creating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/general/
+  inflating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/general/GeneralTemplateTest.java  
+   creating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/bigquery/
+  inflating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/bigquery/BigQueryToGCSTest.java  
+   creating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/databases/
+  inflating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/databases/MongoToGCSTest.java  
+  inflating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/databases/CassandraToBQTest.java  
+  inflating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/databases/CassandraToGCSTest.java  
+  inflating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/databases/SpannerToGCSTest.java  
+   creating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/kafka/
+  inflating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/kafka/KafkaToBQTest.java  
+  inflating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/kafka/KafkaToBQDstreamTest.java  
+  inflating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/kafka/KafkaToGCSTest.java  
+  inflating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/kafka/KafkaReaderTest.java  
+  inflating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/kafka/KafkaToGCSDstreamTest.java  
+   creating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/redshift/
+  inflating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/redshift/RedshiftToGCSTest.java  
+   creating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/dataplex/
+  inflating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/dataplex/DataplexGCSToBQTest.java  
+   creating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/snowflake/
+  inflating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/snowflake/SnowflakeToGCSTest.java  
+   creating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/util/
+  inflating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/util/PropertyUtilTest.java  
+   creating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/jdbc/
+  inflating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/jdbc/JDBCToJDBCTest.java  
+  inflating: dataproc-templates/java/src/test/java/com/google/cloud/dataproc/templates/jdbc/JDBCToGCSTest.java  
+   creating: dataproc-templates/java/src/test/resources/
+  inflating: dataproc-templates/java/src/test/resources/log4j-spark-driver-template.properties  
+   creating: dataproc-templates/java/src/main/
+   creating: dataproc-templates/java/src/main/java/
+   creating: dataproc-templates/java/src/main/java/com/
+   creating: dataproc-templates/java/src/main/java/com/google/
+   creating: dataproc-templates/java/src/main/java/com/google/cloud/
+   creating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/
+   creating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/
+   creating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/word/
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/word/WordCount.java  
+   creating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/hbase/
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/hbase/HbaseToGCS.java  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/hbase/README.md  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/hbase/Dockerfile  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/BaseTemplate.java  
+   creating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/hive/
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/hive/HiveToBigQuery.java  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/hive/HiveToGCS.java  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/hive/README.md  
+   creating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/s3/
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/s3/S3ToBigQuery.java  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/s3/README.md  
+   creating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/pubsub/
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/pubsub/PubSubToBQ.java  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/pubsub/README.md  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/pubsub/PubSubToBigTable.java  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/pubsub/PubSubToGCS.java  
+   creating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/gcs/
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/gcs/TextToBigquery.java  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/gcs/GCStoMongo.java  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/gcs/GCSToJDBCConfig.java  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/gcs/README.md  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/gcs/GCStoBigquery.java  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/gcs/GCSToSpannerConfig.java  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/gcs/GCStoGCS.java  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/gcs/GCSToJDBC.java  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/gcs/GCSToSpanner.java  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/gcs/GCStoBigTable.java  
+   creating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/config/
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/config/InputConfig.java  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/config/OutputConfig.java  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/config/QueryConfig.java  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/config/GeneralTemplateConfig.java  
+   creating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/main/
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/main/DataProcTemplate.java  
+   creating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/pubsublite/
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/pubsublite/PubSubLiteToBigTable.java  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/pubsublite/README.md  
+   creating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/general/
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/general/GeneralTemplate.java  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/general/README.md  
+   creating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/bigquery/
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/bigquery/BigQueryToGCS.java  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/bigquery/README.md  
+   creating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/databases/
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/databases/CassandraToBqConfig.java  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/databases/RedshiftToGCSConfig.java  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/databases/SpannerToGCS.java  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/databases/README.md  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/databases/RedshiftToGCS.java  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/databases/CassandraToGCSConfig.java  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/databases/CassandraToGCS.java  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/databases/SpannerToGCSConfig.java  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/databases/MongoToGCS.java  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/databases/CassandraToBQ.java  
+   creating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/kafka/
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/kafka/KafkaToGCS.java  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/kafka/KafkaToGCSDstream.java  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/kafka/KafkaToBQDstream.java  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/kafka/KafkaToBQ.java  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/kafka/README.md  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/kafka/KafkaToPubSub.java  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/kafka/KafkaReader.java  
+   creating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/dataplex/
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/dataplex/DataplexGCStoBQ.java  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/dataplex/README.md  
+   creating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/snowflake/
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/snowflake/README.md  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/snowflake/SnowflakeToGCS.java  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/snowflake/SnowflakeToGCSConfig.java  
+   creating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/util/
+   creating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/util/Dataplex/
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/util/Dataplex/DataplexAPIUtil.java  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/util/Dataplex/DataplexEntityUtil.java  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/util/Dataplex/DataplexAssetUtil.java  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/util/TemplateConstants.java  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/util/PropertyUtil.java  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/util/ReadSchemaUtil.java  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/util/DataprocTemplateException.java  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/util/ValidationUtil.java  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/util/TemplateUtil.java  
+   creating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/jdbc/
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/jdbc/JDBCToGCS.java  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/jdbc/JDBCToSpanner.java  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/jdbc/README.md  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/jdbc/JDBCToGCSConfig.java  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/jdbc/JDBCToJDBC.java  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/jdbc/JDBCToJDBCConfig.java  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/jdbc/JDBCToBigQuery.java  
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/templates/jdbc/JDBCToSpannerConfig.java  
+   creating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/dialects/
+  inflating: dataproc-templates/java/src/main/java/com/google/cloud/dataproc/dialects/SpannerJdbcDialect.java  
+   creating: dataproc-templates/java/src/main/resources/
+  inflating: dataproc-templates/java/src/main/resources/logback.xml  
+  inflating: dataproc-templates/java/src/main/resources/template.properties  
+  inflating: dataproc-templates/java/src/main/resources/hbase-site.xml  
+  inflating: dataproc-templates/java/src/main/resources/logback-test.xml  
+  inflating: dataproc-templates/java/README.md  
+  inflating: dataproc-templates/java/pom.xml  
+  inflating: dataproc-templates/CONTRIBUTORS.md  
+   creating: dataproc-templates/python/
+  inflating: dataproc-templates/python/.pylintrc  
+   creating: dataproc-templates/python/build/
+   creating: dataproc-templates/python/build/lib/
+   creating: dataproc-templates/python/build/lib/test/
+   creating: dataproc-templates/python/build/lib/test/mongo/
+ extracting: dataproc-templates/python/build/lib/test/mongo/__init__.py  
+  inflating: dataproc-templates/python/build/lib/test/mongo/test_mongo_to_gcs.py  
+  inflating: dataproc-templates/python/build/lib/test/mongo/test_mongo_to_bq.py  
+   creating: dataproc-templates/python/build/lib/test/hbase/
+  inflating: dataproc-templates/python/build/lib/test/hbase/test_hbase_to_gcs.py  
+ extracting: dataproc-templates/python/build/lib/test/hbase/__init__.py  
+   creating: dataproc-templates/python/build/lib/test/hive/
+  inflating: dataproc-templates/python/build/lib/test/hive/test_hive_to_gcs.py  
+ extracting: dataproc-templates/python/build/lib/test/hive/__init__.py  
+  inflating: dataproc-templates/python/build/lib/test/hive/test_hive_to_bigquery.py  
+   creating: dataproc-templates/python/build/lib/test/hive/util/
+ extracting: dataproc-templates/python/build/lib/test/hive/util/__init__.py  
+  inflating: dataproc-templates/python/build/lib/test/hive/util/test_hive_ddl_extractor.py  
+   creating: dataproc-templates/python/build/lib/test/s3/
+ extracting: dataproc-templates/python/build/lib/test/s3/__init__.py  
+  inflating: dataproc-templates/python/build/lib/test/s3/test_s3_to_bigquery.py  
+   creating: dataproc-templates/python/build/lib/test/azure/
+ extracting: dataproc-templates/python/build/lib/test/azure/__init__.py  
+  inflating: dataproc-templates/python/build/lib/test/azure/test_azure_blob_storage_to_bigquery.py  
+   creating: dataproc-templates/python/build/lib/test/gcs/
+ extracting: dataproc-templates/python/build/lib/test/gcs/__init__.py  
+  inflating: dataproc-templates/python/build/lib/test/gcs/test_gcs_to_bigquery.py  
+  inflating: dataproc-templates/python/build/lib/test/gcs/test_text_to_bigquery.py  
+  inflating: dataproc-templates/python/build/lib/test/gcs/test_gcs_to_mongo.py  
+  inflating: dataproc-templates/python/build/lib/test/gcs/test_gcs_to_jdbc.py  
+  inflating: dataproc-templates/python/build/lib/test/gcs/test_gcs_to_bigtable.py  
+  inflating: dataproc-templates/python/build/lib/test/gcs/test_gcs_to_gcs.py  
+   creating: dataproc-templates/python/build/lib/test/pubsublite/
+ extracting: dataproc-templates/python/build/lib/test/pubsublite/__init__.py  
+  inflating: dataproc-templates/python/build/lib/test/pubsublite/test_pubsublite_to_bigtable.py  
+  inflating: dataproc-templates/python/build/lib/test/pubsublite/test_pubsublite_to_gcs.py  
+   creating: dataproc-templates/python/build/lib/test/bigquery/
+  inflating: dataproc-templates/python/build/lib/test/bigquery/test_bigquery_to_gcs.py  
+ extracting: dataproc-templates/python/build/lib/test/bigquery/__init__.py  
+   creating: dataproc-templates/python/build/lib/test/redshift/
+  inflating: dataproc-templates/python/build/lib/test/redshift/test_redshift_to_gcs.py  
+ extracting: dataproc-templates/python/build/lib/test/redshift/__init__.py  
+   creating: dataproc-templates/python/build/lib/test/cassandra/
+  inflating: dataproc-templates/python/build/lib/test/cassandra/test_cassandra_to_gcs.py  
+ extracting: dataproc-templates/python/build/lib/test/cassandra/__init__.py  
+  inflating: dataproc-templates/python/build/lib/test/cassandra/test_cassandra_to_bq.py  
+   creating: dataproc-templates/python/build/lib/test/elasticsearch/
+  inflating: dataproc-templates/python/build/lib/test/elasticsearch/test_elasticsearch_to_gcs.py  
+ extracting: dataproc-templates/python/build/lib/test/elasticsearch/__init__.py  
+  inflating: dataproc-templates/python/build/lib/test/elasticsearch/test_elasticsearch_to_bq.py  
+  inflating: dataproc-templates/python/build/lib/test/elasticsearch/test_elasticsearch_to_bigtable.py  
+   creating: dataproc-templates/python/build/lib/test/util/
+ extracting: dataproc-templates/python/build/lib/test/util/__init__.py  
+  inflating: dataproc-templates/python/build/lib/test/util/test_elasticsearch_transformations.py  
+  inflating: dataproc-templates/python/build/lib/test/util/test_argument_parsing.py  
+   creating: dataproc-templates/python/build/lib/test/jdbc/
+ extracting: dataproc-templates/python/build/lib/test/jdbc/__init__.py  
+  inflating: dataproc-templates/python/build/lib/test/jdbc/test_jdbc_to_gcs.py  
+  inflating: dataproc-templates/python/build/lib/test/jdbc/test_jdbc_to_bigquery.py  
+  inflating: dataproc-templates/python/build/lib/test/jdbc/test_jdbc_to_jdbc.py  
+   creating: dataproc-templates/python/build/lib/dataproc_templates/
+   creating: dataproc-templates/python/build/lib/dataproc_templates/mongo/
+  inflating: dataproc-templates/python/build/lib/dataproc_templates/mongo/mongo_to_bq.py  
+  inflating: dataproc-templates/python/build/lib/dataproc_templates/mongo/__init__.py  
+  inflating: dataproc-templates/python/build/lib/dataproc_templates/mongo/mongo_to_gcs.py  
+   creating: dataproc-templates/python/build/lib/dataproc_templates/hbase/
+  inflating: dataproc-templates/python/build/lib/dataproc_templates/hbase/__init__.py  
+  inflating: dataproc-templates/python/build/lib/dataproc_templates/hbase/hbase_to_gcs.py  
+   creating: dataproc-templates/python/build/lib/dataproc_templates/hive/
+  inflating: dataproc-templates/python/build/lib/dataproc_templates/hive/hive_to_bigquery.py  
+  inflating: dataproc-templates/python/build/lib/dataproc_templates/hive/__init__.py  
+  inflating: dataproc-templates/python/build/lib/dataproc_templates/hive/hive_to_gcs.py  
+   creating: dataproc-templates/python/build/lib/dataproc_templates/hive/util/
+ extracting: dataproc-templates/python/build/lib/dataproc_templates/hive/util/__init__.py  
+  inflating: dataproc-templates/python/build/lib/dataproc_templates/hive/util/hive_ddl_extractor.py  
+  inflating: dataproc-templates/python/build/lib/dataproc_templates/__init__.py  
+   creating: dataproc-templates/python/build/lib/dataproc_templates/s3/
+  inflating: dataproc-templates/python/build/lib/dataproc_templates/s3/__init__.py  
+  inflating: dataproc-templates/python/build/lib/dataproc_templates/s3/s3_to_bigquery.py  
+  inflating: dataproc-templates/python/build/lib/dataproc_templates/template_name.py  
+  inflating: dataproc-templates/python/build/lib/dataproc_templates/base_template.py  
+   creating: dataproc-templates/python/build/lib/dataproc_templates/azure/
+  inflating: dataproc-templates/python/build/lib/dataproc_templates/azure/__init__.py  
+  inflating: dataproc-templates/python/build/lib/dataproc_templates/azure/azure_blob_storage_to_bigquery.py  
+   creating: dataproc-templates/python/build/lib/dataproc_templates/gcs/
+  inflating: dataproc-templates/python/build/lib/dataproc_templates/gcs/gcs_to_gcs.py  
+  inflating: dataproc-templates/python/build/lib/dataproc_templates/gcs/__init__.py  
+  inflating: dataproc-templates/python/build/lib/dataproc_templates/gcs/gcs_to_jdbc.py  
+  inflating: dataproc-templates/python/build/lib/dataproc_templates/gcs/text_to_bigquery.py  
+  inflating: dataproc-templates/python/build/lib/dataproc_templates/gcs/gcs_to_bigquery.py  
+  inflating: dataproc-templates/python/build/lib/dataproc_templates/gcs/gcs_to_mongo.py  
+  inflating: dataproc-templates/python/build/lib/dataproc_templates/gcs/gcs_to_bigtable.py  
+   creating: dataproc-templates/python/build/lib/dataproc_templates/pubsublite/
+  inflating: dataproc-templates/python/build/lib/dataproc_templates/pubsublite/__init__.py  
+  inflating: dataproc-templates/python/build/lib/dataproc_templates/pubsublite/pubsublite_to_bigtable.py  
+  inflating: dataproc-templates/python/build/lib/dataproc_templates/pubsublite/pubsublite_to_gcs.py  
+   creating: dataproc-templates/python/build/lib/dataproc_templates/bigquery/
+  inflating: dataproc-templates/python/build/lib/dataproc_templates/bigquery/bigquery_to_gcs.py  
+  inflating: dataproc-templates/python/build/lib/dataproc_templates/bigquery/__init__.py  
+   creating: dataproc-templates/python/build/lib/dataproc_templates/kafka/
+  inflating: dataproc-templates/python/build/lib/dataproc_templates/kafka/__init__.py  
+  inflating: dataproc-templates/python/build/lib/dataproc_templates/kafka/kafka_to_bq.py  
+  inflating: dataproc-templates/python/build/lib/dataproc_templates/kafka/kafka_to_gcs.py  
+   creating: dataproc-templates/python/build/lib/dataproc_templates/redshift/
+  inflating: dataproc-templates/python/build/lib/dataproc_templates/redshift/__init__.py  
+  inflating: dataproc-templates/python/build/lib/dataproc_templates/redshift/redshift_to_gcs.py  
+   creating: dataproc-templates/python/build/lib/dataproc_templates/cassandra/
+  inflating: dataproc-templates/python/build/lib/dataproc_templates/cassandra/__init__.py  
+  inflating: dataproc-templates/python/build/lib/dataproc_templates/cassandra/cassandra_to_gcs.py  
+  inflating: dataproc-templates/python/build/lib/dataproc_templates/cassandra/cassandra_to_bigquery.py  
+   creating: dataproc-templates/python/build/lib/dataproc_templates/snowflake/
+  inflating: dataproc-templates/python/build/lib/dataproc_templates/snowflake/snowflake_to_gcs.py  
+  inflating: dataproc-templates/python/build/lib/dataproc_templates/snowflake/__init__.py  
+   creating: dataproc-templates/python/build/lib/dataproc_templates/elasticsearch/
+  inflating: dataproc-templates/python/build/lib/dataproc_templates/elasticsearch/__init__.py  
+  inflating: dataproc-templates/python/build/lib/dataproc_templates/elasticsearch/elasticsearch_to_gcs.py  
+  inflating: dataproc-templates/python/build/lib/dataproc_templates/elasticsearch/elasticsearch_to_bq.py  
+  inflating: dataproc-templates/python/build/lib/dataproc_templates/elasticsearch/elasticsearch_to_bigtable.py  
+   creating: dataproc-templates/python/build/lib/dataproc_templates/util/
+  inflating: dataproc-templates/python/build/lib/dataproc_templates/util/dataframe_writer_wrappers.py  
+  inflating: dataproc-templates/python/build/lib/dataproc_templates/util/__init__.py  
+  inflating: dataproc-templates/python/build/lib/dataproc_templates/util/tracking.py  
+  inflating: dataproc-templates/python/build/lib/dataproc_templates/util/template_constants.py  
+  inflating: dataproc-templates/python/build/lib/dataproc_templates/util/secret_manager.py  
+  inflating: dataproc-templates/python/build/lib/dataproc_templates/util/elasticsearch_transformations.py  
+  inflating: dataproc-templates/python/build/lib/dataproc_templates/util/dataframe_reader_wrappers.py  
+  inflating: dataproc-templates/python/build/lib/dataproc_templates/util/argument_parsing.py  
+   creating: dataproc-templates/python/build/lib/dataproc_templates/jdbc/
+  inflating: dataproc-templates/python/build/lib/dataproc_templates/jdbc/__init__.py  
+  inflating: dataproc-templates/python/build/lib/dataproc_templates/jdbc/jdbc_to_gcs.py  
+  inflating: dataproc-templates/python/build/lib/dataproc_templates/jdbc/jdbc_to_jdbc.py  
+  inflating: dataproc-templates/python/build/lib/dataproc_templates/jdbc/jdbc_to_bigquery.py  
+   creating: dataproc-templates/python/build/bdist.linux-x86_64/
+   creating: dataproc-templates/python/test/
+   creating: dataproc-templates/python/test/mongo/
+ extracting: dataproc-templates/python/test/mongo/__init__.py  
+  inflating: dataproc-templates/python/test/mongo/test_mongo_to_gcs.py  
+  inflating: dataproc-templates/python/test/mongo/test_mongo_to_bq.py  
+   creating: dataproc-templates/python/test/hbase/
+  inflating: dataproc-templates/python/test/hbase/test_hbase_to_gcs.py  
+ extracting: dataproc-templates/python/test/hbase/__init__.py  
+   creating: dataproc-templates/python/test/hive/
+  inflating: dataproc-templates/python/test/hive/test_hive_to_gcs.py  
+ extracting: dataproc-templates/python/test/hive/__init__.py  
+  inflating: dataproc-templates/python/test/hive/test_hive_to_bigquery.py  
+   creating: dataproc-templates/python/test/hive/util/
+ extracting: dataproc-templates/python/test/hive/util/__init__.py  
+  inflating: dataproc-templates/python/test/hive/util/test_hive_ddl_extractor.py  
+ extracting: dataproc-templates/python/test/__init__.py  
+   creating: dataproc-templates/python/test/s3/
+ extracting: dataproc-templates/python/test/s3/__init__.py  
+  inflating: dataproc-templates/python/test/s3/test_s3_to_bigquery.py  
+   creating: dataproc-templates/python/test/azure/
+ extracting: dataproc-templates/python/test/azure/__init__.py  
+  inflating: dataproc-templates/python/test/azure/test_azure_blob_storage_to_bigquery.py  
+   creating: dataproc-templates/python/test/gcs/
+ extracting: dataproc-templates/python/test/gcs/__init__.py  
+  inflating: dataproc-templates/python/test/gcs/test_gcs_to_bigquery.py  
+  inflating: dataproc-templates/python/test/gcs/test_text_to_bigquery.py  
+  inflating: dataproc-templates/python/test/gcs/test_gcs_to_mongo.py  
+  inflating: dataproc-templates/python/test/gcs/test_gcs_to_jdbc.py  
+  inflating: dataproc-templates/python/test/gcs/test_gcs_to_bigtable.py  
+  inflating: dataproc-templates/python/test/gcs/test_gcs_to_gcs.py  
+   creating: dataproc-templates/python/test/pubsublite/
+ extracting: dataproc-templates/python/test/pubsublite/__init__.py  
+  inflating: dataproc-templates/python/test/pubsublite/test_pubsublite_to_bigtable.py  
+  inflating: dataproc-templates/python/test/pubsublite/test_pubsublite_to_gcs.py  
+   creating: dataproc-templates/python/test/bigquery/
+  inflating: dataproc-templates/python/test/bigquery/test_bigquery_to_gcs.py  
+ extracting: dataproc-templates/python/test/bigquery/__init__.py  
+   creating: dataproc-templates/python/test/redshift/
+  inflating: dataproc-templates/python/test/redshift/test_redshift_to_gcs.py  
+ extracting: dataproc-templates/python/test/redshift/__init__.py  
+   creating: dataproc-templates/python/test/cassandra/
+  inflating: dataproc-templates/python/test/cassandra/test_cassandra_to_gcs.py  
+ extracting: dataproc-templates/python/test/cassandra/__init__.py  
+  inflating: dataproc-templates/python/test/cassandra/test_cassandra_to_bq.py  
+   creating: dataproc-templates/python/test/snowflake/
+  inflating: dataproc-templates/python/test/snowflake/test_snowflake_to_gcs.py  
+   creating: dataproc-templates/python/test/elasticsearch/
+  inflating: dataproc-templates/python/test/elasticsearch/test_elasticsearch_to_gcs.py  
+ extracting: dataproc-templates/python/test/elasticsearch/__init__.py  
+  inflating: dataproc-templates/python/test/elasticsearch/test_elasticsearch_to_bq.py  
+  inflating: dataproc-templates/python/test/elasticsearch/test_elasticsearch_to_bigtable.py  
+   creating: dataproc-templates/python/test/util/
+ extracting: dataproc-templates/python/test/util/__init__.py  
+  inflating: dataproc-templates/python/test/util/test_elasticsearch_transformations.py  
+  inflating: dataproc-templates/python/test/util/test_argument_parsing.py  
+   creating: dataproc-templates/python/test/jdbc/
+ extracting: dataproc-templates/python/test/jdbc/__init__.py  
+  inflating: dataproc-templates/python/test/jdbc/test_jdbc_to_gcs.py  
+  inflating: dataproc-templates/python/test/jdbc/test_jdbc_to_bigquery.py  
+  inflating: dataproc-templates/python/test/jdbc/test_jdbc_to_jdbc.py  
+   creating: dataproc-templates/python/google_dataproc_templates.egg-info/
+  inflating: dataproc-templates/python/google_dataproc_templates.egg-info/PKG-INFO  
+ extracting: dataproc-templates/python/google_dataproc_templates.egg-info/dependency_links.txt  
+  inflating: dataproc-templates/python/google_dataproc_templates.egg-info/requires.txt  
+  inflating: dataproc-templates/python/google_dataproc_templates.egg-info/SOURCES.txt  
+ extracting: dataproc-templates/python/google_dataproc_templates.egg-info/top_level.txt  
+  inflating: dataproc-templates/python/setup.py  
+   creating: dataproc-templates/python/.ci/
+  inflating: dataproc-templates/python/.ci/Jenkinsfile  
+  inflating: dataproc-templates/python/MANIFEST.in  
+  inflating: dataproc-templates/python/.gitignore  
+  inflating: dataproc-templates/python/setup.cfg  
+  inflating: dataproc-templates/python/release-please-config.json  
+   creating: dataproc-templates/python/bin/
+  inflating: dataproc-templates/python/bin/dataproc_template_functions.sh  
+  inflating: dataproc-templates/python/bin/start.sh  
+   creating: dataproc-templates/python/dist/
+  inflating: dataproc-templates/python/dist/dataproc_templates_distribution.egg  
+  inflating: dataproc-templates/python/README.md  
+  inflating: dataproc-templates/python/requirements.txt  
+   creating: dataproc-templates/python/dataproc_templates/
+   creating: dataproc-templates/python/dataproc_templates/mongo/
+  inflating: dataproc-templates/python/dataproc_templates/mongo/mongo_to_bq.py  
+  inflating: dataproc-templates/python/dataproc_templates/mongo/__init__.py  
+  inflating: dataproc-templates/python/dataproc_templates/mongo/mongo_to_gcs.py  
+  inflating: dataproc-templates/python/dataproc_templates/mongo/README.md  
+   creating: dataproc-templates/python/dataproc_templates/hbase/
+  inflating: dataproc-templates/python/dataproc_templates/hbase/__init__.py  
+  inflating: dataproc-templates/python/dataproc_templates/hbase/README.md  
+  inflating: dataproc-templates/python/dataproc_templates/hbase/Dockerfile  
+  inflating: dataproc-templates/python/dataproc_templates/hbase/hbase_to_gcs.py  
+  inflating: dataproc-templates/python/dataproc_templates/hbase/hbase-site.xml  
+   creating: dataproc-templates/python/dataproc_templates/hive/
+  inflating: dataproc-templates/python/dataproc_templates/hive/hive_to_bigquery.py  
+  inflating: dataproc-templates/python/dataproc_templates/hive/__init__.py  
+  inflating: dataproc-templates/python/dataproc_templates/hive/README.md  
+  inflating: dataproc-templates/python/dataproc_templates/hive/hive_to_gcs.py  
+   creating: dataproc-templates/python/dataproc_templates/hive/util/
+ extracting: dataproc-templates/python/dataproc_templates/hive/util/__init__.py  
+  inflating: dataproc-templates/python/dataproc_templates/hive/util/hive_ddl_extractor.py  
+  inflating: dataproc-templates/python/dataproc_templates/hive/util/README.md  
+  inflating: dataproc-templates/python/dataproc_templates/__init__.py  
+   creating: dataproc-templates/python/dataproc_templates/s3/
+  inflating: dataproc-templates/python/dataproc_templates/s3/__init__.py  
+  inflating: dataproc-templates/python/dataproc_templates/s3/README.md  
+  inflating: dataproc-templates/python/dataproc_templates/s3/s3_to_bigquery.py  
+  inflating: dataproc-templates/python/dataproc_templates/template_name.py  
+  inflating: dataproc-templates/python/dataproc_templates/base_template.py  
+   creating: dataproc-templates/python/dataproc_templates/azure/
+  inflating: dataproc-templates/python/dataproc_templates/azure/__init__.py  
+  inflating: dataproc-templates/python/dataproc_templates/azure/azure_blob_storage_to_bigquery.py  
+  inflating: dataproc-templates/python/dataproc_templates/azure/README.md  
+   creating: dataproc-templates/python/dataproc_templates/gcs/
+  inflating: dataproc-templates/python/dataproc_templates/gcs/gcs_to_gcs.py  
+  inflating: dataproc-templates/python/dataproc_templates/gcs/__init__.py  
+  inflating: dataproc-templates/python/dataproc_templates/gcs/gcs_to_jdbc.py  
+  inflating: dataproc-templates/python/dataproc_templates/gcs/text_to_bigquery.py  
+  inflating: dataproc-templates/python/dataproc_templates/gcs/README.md  
+  inflating: dataproc-templates/python/dataproc_templates/gcs/Dockerfile  
+  inflating: dataproc-templates/python/dataproc_templates/gcs/gcs_to_bigquery.py  
+  inflating: dataproc-templates/python/dataproc_templates/gcs/gcs_to_mongo.py  
+  inflating: dataproc-templates/python/dataproc_templates/gcs/hbase-site.xml  
+  inflating: dataproc-templates/python/dataproc_templates/gcs/gcs_to_bigtable.py  
+   creating: dataproc-templates/python/dataproc_templates/pubsublite/
+  inflating: dataproc-templates/python/dataproc_templates/pubsublite/__init__.py  
+  inflating: dataproc-templates/python/dataproc_templates/pubsublite/pubsublite_to_bigtable.py  
+  inflating: dataproc-templates/python/dataproc_templates/pubsublite/README.md  
+  inflating: dataproc-templates/python/dataproc_templates/pubsublite/pubsublite_to_gcs.py  
+   creating: dataproc-templates/python/dataproc_templates/bigquery/
+  inflating: dataproc-templates/python/dataproc_templates/bigquery/bigquery_to_gcs.py  
+  inflating: dataproc-templates/python/dataproc_templates/bigquery/__init__.py  
+  inflating: dataproc-templates/python/dataproc_templates/bigquery/README.md  
+   creating: dataproc-templates/python/dataproc_templates/kafka/
+  inflating: dataproc-templates/python/dataproc_templates/kafka/__init__.py  
+  inflating: dataproc-templates/python/dataproc_templates/kafka/kafka_to_bq.py  
+  inflating: dataproc-templates/python/dataproc_templates/kafka/README.md  
+  inflating: dataproc-templates/python/dataproc_templates/kafka/kafka_to_gcs.py  
+   creating: dataproc-templates/python/dataproc_templates/redshift/
+  inflating: dataproc-templates/python/dataproc_templates/redshift/__init__.py  
+  inflating: dataproc-templates/python/dataproc_templates/redshift/redshift_to_gcs.py  
+  inflating: dataproc-templates/python/dataproc_templates/redshift/README.md  
+   creating: dataproc-templates/python/dataproc_templates/cassandra/
+  inflating: dataproc-templates/python/dataproc_templates/cassandra/__init__.py  
+  inflating: dataproc-templates/python/dataproc_templates/cassandra/README.md  
+  inflating: dataproc-templates/python/dataproc_templates/cassandra/cassandra_to_gcs.py  
+  inflating: dataproc-templates/python/dataproc_templates/cassandra/cassandra_to_bigquery.py  
+   creating: dataproc-templates/python/dataproc_templates/snowflake/
+  inflating: dataproc-templates/python/dataproc_templates/snowflake/snowflake_to_gcs.py  
+  inflating: dataproc-templates/python/dataproc_templates/snowflake/__init__.py  
+  inflating: dataproc-templates/python/dataproc_templates/snowflake/README.md  
+   creating: dataproc-templates/python/dataproc_templates/elasticsearch/
+  inflating: dataproc-templates/python/dataproc_templates/elasticsearch/__init__.py  
+  inflating: dataproc-templates/python/dataproc_templates/elasticsearch/elasticsearch_to_gcs.py  
+  inflating: dataproc-templates/python/dataproc_templates/elasticsearch/README.md  
+  inflating: dataproc-templates/python/dataproc_templates/elasticsearch/Dockerfile  
+  inflating: dataproc-templates/python/dataproc_templates/elasticsearch/hbase-site.xml  
+  inflating: dataproc-templates/python/dataproc_templates/elasticsearch/elasticsearch_to_bq.py  
+  inflating: dataproc-templates/python/dataproc_templates/elasticsearch/elasticsearch_to_bigtable.py  
+   creating: dataproc-templates/python/dataproc_templates/util/
+  inflating: dataproc-templates/python/dataproc_templates/util/dataframe_writer_wrappers.py  
+  inflating: dataproc-templates/python/dataproc_templates/util/__init__.py  
+  inflating: dataproc-templates/python/dataproc_templates/util/tracking.py  
+  inflating: dataproc-templates/python/dataproc_templates/util/template_constants.py  
+  inflating: dataproc-templates/python/dataproc_templates/util/secret_manager.py  
+  inflating: dataproc-templates/python/dataproc_templates/util/elasticsearch_transformations.py  
+  inflating: dataproc-templates/python/dataproc_templates/util/dataframe_reader_wrappers.py  
+  inflating: dataproc-templates/python/dataproc_templates/util/argument_parsing.py  
+   creating: dataproc-templates/python/dataproc_templates/jdbc/
+  inflating: dataproc-templates/python/dataproc_templates/jdbc/__init__.py  
+  inflating: dataproc-templates/python/dataproc_templates/jdbc/jdbc_to_gcs.py  
+  inflating: dataproc-templates/python/dataproc_templates/jdbc/README.md  
+  inflating: dataproc-templates/python/dataproc_templates/jdbc/jdbc_to_jdbc.py  
+  inflating: dataproc-templates/python/dataproc_templates/jdbc/jdbc_to_bigquery.py  
+  inflating: dataproc-templates/python/main.py  
+ extracting: dataproc-templates/python/version.py  
+  inflating: dataproc-templates/.gitignore  
+  inflating: dataproc-templates/.trampolinerc  
+ extracting: dataproc-templates/.release-please-manifest.json  
+  inflating: dataproc-templates/cloudbuild.yaml  
+  inflating: dataproc-templates/CONTRIBUTING.md  
+  inflating: dataproc-templates/README.md  
+  inflating: dataproc-templates/CHANGELOG.md  
+   creating: dataproc-templates/docs/
+  inflating: dataproc-templates/docs/release-please-pr.png  
+  inflating: dataproc-templates/docs/commit-checker-error.png  
+  inflating: dataproc-templates/docs/commit-checker-release-automation.md  
+  inflating: dataproc-templates/docs/commit-checker-bot.png  
+   creating: dataproc-templates/notebooks/
+   creating: dataproc-templates/notebooks/test/
+   creating: dataproc-templates/notebooks/test/util/
+  inflating: dataproc-templates/notebooks/test/util/test_notebook_functions.py  
+  inflating: dataproc-templates/notebooks/test/util/test_jdbc_input_manager.py  
+ extracting: dataproc-templates/notebooks/__init__.py  
+   creating: dataproc-templates/notebooks/mssql2bq/
+  inflating: dataproc-templates/notebooks/mssql2bq/README.md  
+  inflating: dataproc-templates/notebooks/mssql2bq/mssql-to-bigquery-notebook.ipynb  
+   creating: dataproc-templates/notebooks/mysql2spanner/
+  inflating: dataproc-templates/notebooks/mysql2spanner/__init__.py  
+  inflating: dataproc-templates/notebooks/mysql2spanner/MySqlToSpanner_notebook.ipynb  
+  inflating: dataproc-templates/notebooks/mysql2spanner/MySqlToSpanner_parameterize_script.py  
+  inflating: dataproc-templates/notebooks/mysql2spanner/README.md  
+  inflating: dataproc-templates/notebooks/run_notebook.py  
+   creating: dataproc-templates/notebooks/oracle2bq/
+  inflating: dataproc-templates/notebooks/oracle2bq/__init__.py  
+  inflating: dataproc-templates/notebooks/oracle2bq/OracleToBigQuery_parameterize_script.py  
+  inflating: dataproc-templates/notebooks/oracle2bq/OracleToBigQuery_notebook.ipynb  
+  inflating: dataproc-templates/notebooks/oracle2bq/README.md  
+   creating: dataproc-templates/notebooks/oracle2spanner/
+  inflating: dataproc-templates/notebooks/oracle2spanner/README.md  
+  inflating: dataproc-templates/notebooks/oracle2spanner/OracleToSpanner_notebook.ipynb  
+   creating: dataproc-templates/notebooks/hive2bq/
+  inflating: dataproc-templates/notebooks/hive2bq/__init__.py  
+  inflating: dataproc-templates/notebooks/hive2bq/HiveToBigquery_parameterize_script.py  
+  inflating: dataproc-templates/notebooks/hive2bq/HiveToBigquery_notebook.ipynb  
+  inflating: dataproc-templates/notebooks/hive2bq/README.md  
+   creating: dataproc-templates/notebooks/hive2bq/images/
+  inflating: dataproc-templates/notebooks/hive2bq/images/HiveToBQ_Flow.png  
+   creating: dataproc-templates/notebooks/oracle2postgres/
+  inflating: dataproc-templates/notebooks/oracle2postgres/OracleToPostgres_notebook.ipynb  
+  inflating: dataproc-templates/notebooks/oracle2postgres/__init__.py  
+  inflating: dataproc-templates/notebooks/oracle2postgres/README.md  
+  inflating: dataproc-templates/notebooks/oracle2postgres/OracleToPostgres_parameterize_script.py  
+   creating: dataproc-templates/notebooks/parameterize_script/
+  inflating: dataproc-templates/notebooks/parameterize_script/script_name.py  
+  inflating: dataproc-templates/notebooks/parameterize_script/__init__.py  
+  inflating: dataproc-templates/notebooks/parameterize_script/base_parameterize_script.py  
+   creating: dataproc-templates/notebooks/parameterize_script/util/
+  inflating: dataproc-templates/notebooks/parameterize_script/util/__init__.py  
+  inflating: dataproc-templates/notebooks/parameterize_script/util/notebook_constants.py  
+  inflating: dataproc-templates/notebooks/parameterize_script/util/argument_parsing.py  
+   creating: dataproc-templates/notebooks/mssql2postgresql/
+  inflating: dataproc-templates/notebooks/mssql2postgresql/README.md  
+  inflating: dataproc-templates/notebooks/mssql2postgresql/mssql-to-postgres-notebook.ipynb  
+  inflating: dataproc-templates/notebooks/README.md  
+  inflating: dataproc-templates/notebooks/requirements.txt  
+   creating: dataproc-templates/notebooks/postgresql2bq/
+  inflating: dataproc-templates/notebooks/postgresql2bq/PostgreSqlToBigQuery_parameterize_script.py  
+  inflating: dataproc-templates/notebooks/postgresql2bq/__init__.py  
+  inflating: dataproc-templates/notebooks/postgresql2bq/postgresql-to-bigquery-notebook.ipynb  
+  inflating: dataproc-templates/notebooks/postgresql2bq/README.md  
+   creating: dataproc-templates/notebooks/util/
+ extracting: dataproc-templates/notebooks/util/__init__.py  
+  inflating: dataproc-templates/notebooks/util/notebook_functions.py  
+  inflating: dataproc-templates/notebooks/util/global_typeconvert.config.yaml  
+  inflating: dataproc-templates/notebooks/util/sql_translation.py  
+   creating: dataproc-templates/notebooks/util/jdbc/
+ extracting: dataproc-templates/notebooks/util/jdbc/__init__.py  
+  inflating: dataproc-templates/notebooks/util/jdbc/jdbc_input_manager_interface.py  
+   creating: dataproc-templates/notebooks/util/jdbc/engines/
+ extracting: dataproc-templates/notebooks/util/jdbc/engines/__init__.py  
+  inflating: dataproc-templates/notebooks/util/jdbc/engines/mysql_input_manager.py  
+  inflating: dataproc-templates/notebooks/util/jdbc/engines/oracle_input_manager.py  
+  inflating: dataproc-templates/notebooks/util/jdbc/jdbc_input_manager.py  
+   creating: dataproc-templates/notebooks/generic_notebook/
+  inflating: dataproc-templates/notebooks/generic_notebook/README.md  
+   creating: dataproc-templates/notebooks/generic_notebook/images/
+  inflating: dataproc-templates/notebooks/generic_notebook/images/create_notebook.png  
+  inflating: dataproc-templates/notebooks/generic_notebook/images/clone_repository.png  
+  inflating: dataproc-templates/notebooks/generic_notebook/vertex_pipeline_pyspark.ipynb  
+  inflating: dataproc-templates/dp-templates.png  
+   creating: dataproc-templates/.git/
+  inflating: dataproc-templates/.git/description  
+  inflating: dataproc-templates/.git/packed-refs  
+   creating: dataproc-templates/.git/logs/
+   creating: dataproc-templates/.git/logs/refs/
+   creating: dataproc-templates/.git/logs/refs/heads/
+  inflating: dataproc-templates/.git/logs/refs/heads/main  
+   creating: dataproc-templates/.git/logs/refs/remotes/
+   creating: dataproc-templates/.git/logs/refs/remotes/origin/
+  inflating: dataproc-templates/.git/logs/refs/remotes/origin/HEAD  
+  inflating: dataproc-templates/.git/logs/HEAD  
+   creating: dataproc-templates/.git/objects/
+   creating: dataproc-templates/.git/objects/pack/
+  inflating: dataproc-templates/.git/objects/pack/pack-e4d71afaa4da093008dcc723aef9bf13516f01a5.pack  
+  inflating: dataproc-templates/.git/objects/pack/pack-e4d71afaa4da093008dcc723aef9bf13516f01a5.idx  
+   creating: dataproc-templates/.git/objects/info/
+  inflating: dataproc-templates/.git/config  
+   creating: dataproc-templates/.git/refs/
+   creating: dataproc-templates/.git/refs/heads/
+  inflating: dataproc-templates/.git/refs/heads/main  
+   creating: dataproc-templates/.git/refs/remotes/
+   creating: dataproc-templates/.git/refs/remotes/origin/
+ extracting: dataproc-templates/.git/refs/remotes/origin/HEAD  
+   creating: dataproc-templates/.git/refs/tags/
+   creating: dataproc-templates/.git/branches/
+ extracting: dataproc-templates/.git/HEAD  
+   creating: dataproc-templates/.git/info/
+  inflating: dataproc-templates/.git/info/exclude  
+  inflating: dataproc-templates/.git/index  
+   creating: dataproc-templates/.git/hooks/
+  inflating: dataproc-templates/.git/hooks/update.sample  
+  inflating: dataproc-templates/.git/hooks/pre-merge-commit.sample  
+  inflating: dataproc-templates/.git/hooks/pre-applypatch.sample  
+  inflating: dataproc-templates/.git/hooks/pre-push.sample  
+  inflating: dataproc-templates/.git/hooks/pre-commit.sample  
+  inflating: dataproc-templates/.git/hooks/commit-msg.sample  
+  inflating: dataproc-templates/.git/hooks/prepare-commit-msg.sample  
+  inflating: dataproc-templates/.git/hooks/push-to-checkout.sample  
+  inflating: dataproc-templates/.git/hooks/applypatch-msg.sample  
+  inflating: dataproc-templates/.git/hooks/post-update.sample  
+  inflating: dataproc-templates/.git/hooks/fsmonitor-watchman.sample  
+  inflating: dataproc-templates/.git/hooks/pre-rebase.sample  
+  inflating: dataproc-templates/.git/hooks/pre-receive.sample  
+   creating: dataproc-templates/.github/
+   creating: dataproc-templates/.github/workflows/
+  inflating: dataproc-templates/.github/workflows/python-publish.yml  
+  inflating: dataproc-templates/.github/workflows/execute_jenkins_build_python.yml  
+  inflating: dataproc-templates/.github/workflows/commit-checker.yml  
+  inflating: dataproc-templates/.github/workflows/execute_jenkins_integration_tests_python.yml  
+  inflating: dataproc-templates/.github/workflows/execute_jenkins_integration_tests_java.yml  
+  inflating: dataproc-templates/.github/workflows/execute_jenkins_build_java.yml  
+ extracting: dataproc-templates/.github/release-trigger.yml  
+  inflating: dataproc-templates/.github/release-please.yml  
+  inflating: dataproc-templates/LICENSE  
+student_02_ba0f49082a7f@lab-vm:~$ cd dataproc-templates/python
+student_02_ba0f49082a7f@lab-vm:~/dataproc-templates/python$ 
+student_02_ba0f49082a7f@lab-vm:~$ cd dataproc-templates/python
+student_02_ba0f49082a7f@lab-vm:~/dataproc-templates/python$ ^C
+student_02_ba0f49082a7f@lab-vm:~/dataproc-templates/python$ export GCP_PROJECT=qwiklabs-gcp-03-60c9c1ea06a1
+export REGION=us-east1
+export GCS_STAGING_LOCATION=gs://qwiklabs-gcp-03-60c9c1ea06a1
+export JARS=gs://cloud-training/dataengineering/lab_assets/idegc/spark-bigquery_2.12-20221021-2134.jar
+student_02_ba0f49082a7f@lab-vm:~/dataproc-templates/python$ ./bin/start.sh \
+-- --template=GCSTOBIGQUERY \
+    --gcs.bigquery.input.format="avro" \
+    --gcs.bigquery.input.location="gs://qwiklabs-gcp-03-60c9c1ea06a1" \
+    --gcs.bigquery.input.inferschema="true" \
+    --gcs.bigquery.output.dataset="loadavro" \
+    --gcs.bigquery.output.table="campaigns" \
+    --gcs.bigquery.output.mode=overwrite\
+    --gcs.bigquery.temp.bucket.name="qwiklabs-gcp-03-60c9c1ea06a1-bqtemp"
+
+student_02_ba0f49082a7f@lab-vm:~/dataproc-templates/python$ bq query \
+ --use_legacy_sql=false \
+ 'SELECT * FROM `loadavro.campaigns`;'
++------------+--------+---------------------+--------+---------------------+----------+-----+
+| created_at | period |    campaign_name    | amount | advertising_channel | bid_type | id  |
++------------+--------+---------------------+--------+---------------------+----------+-----+
+| 2020-09-17 |     90 | NA - Video - Other  |     41 | Video               | CPC      |  81 |
+| 2021-01-19 |     30 | NA - Video - Promo  |    325 | Video               | CPC      | 137 |
+| 2021-06-28 |     30 | NA - Video - Promo  |     78 | Video               | CPC      | 214 |
+| 2021-03-15 |     30 | EU - Search - Brand |    465 | Search              | CPC      | 170 |
+| 2022-01-01 |     30 | EU - Search - Brand |     83 | Search              | CPC      | 276 |
+| 2020-02-18 |     30 | EU - Search - Brand |     30 | Search              | CPC      |  25 |
+| 2021-06-08 |     30 | EU - Search - Brand |    172 | Search              | CPC      | 201 |
+| 2020-11-29 |     60 | EU - Search - Other |     83 | Search              | CPC      | 115 |
+| 2021-09-11 |     30 | EU - Search - Other |     86 | Search              | CPC      | 237 |
+| 2022-02-17 |     30 | EU - Search - Other |     64 | Search              | CPC      | 296 |
++------------+--------+---------------------+--------+---------------------+----------+-----+
+student_02_ba0f49082a7f@lab-vm:~/dataproc-templates/python$ 
+
+---------------------------------------------------------------------------------------------------
+
+
