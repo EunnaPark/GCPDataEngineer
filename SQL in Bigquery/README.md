@@ -23,3 +23,7 @@ SQL files contain multiple independent examples; run one statement at a time in 
 The supplied transcript confirms the Legacy SQL project-identifier error and the UNION parsing error. Corrected query outputs have not been supplied. The ecommerce material is a guided course, with an independent investigation proposed in its guide. It is not yet a completed business analysis or a production pipeline.
 
 Original new `.txt` files remain alongside these guides for complete context, including course instructions, sample outputs, and captured help text. CSV files are the previously supplied London bikeshare exports; they are separate from the baby-name and ecommerce exercises.
+
+## Additional course record — 2026-10-09
+
+[BigQuery: Troubleshooting Common SQL Errors](TROUBLESHOOTING-COMMON-SQL-ERRORS.md) reviews familiar SQL syntax and aggregation concepts. Retained as a course taken, with [corrected SQL examples](troubleshooting-common-errors.sql); it is not presented as a new independent portfolio project.

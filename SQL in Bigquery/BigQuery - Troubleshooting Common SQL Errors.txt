@@ -1,0 +1,341 @@
+Overview
+BigQuery is Google's fully managed, NoOps, low cost analytics database. With BigQuery you can query terabytes and terabytes of data without having any infrastructure to manage or needing a database administrator. BigQuery uses SQL, and you can take advantage of the pay-as-you-go model. BigQuery allows you to focus on analyzing data to find meaningful insights.
+
+A newly available ecommerce dataset that has millions of Google Analytics records for the Google Merchandise Store has been loaded into BigQuery. You have a copy of that dataset for this lab and will explore the available fields and row for insights.
+
+This lab steps you through the logic of troubleshooting queries. It provides activities within the context of a real-world scenario. Throughout the lab, imagine you're working with a new data analyst on your team, and they've provided you with their queries below to answer some questions on your ecommerce dataset. Use the answers to fix their queries to get a meaningful result.
+
+What you'll learn
+In this lab, you learn how to perform the following tasks:
+
+Pin projects to the BigQuery resource tree
+Use the BigQuery query editor and query validator to identify and troubleshoot SQL syntax and logic errors
+
+
+
+Task 1. Pin a project to the BigQuery resource tree
+In the Google Cloud console, in the Navigation menu (Navigation menu icon) click BigQuery.
+The Welcome to BigQuery in the Cloud Console message box opens.
+
+Note: The Welcome to BigQuery in the Cloud Console message box provides a link to the quickstart guide and UI updates.
+Click Done.
+
+BigQuery public datasets are not displayed by default. To open the public datasets project, copy data-to-insights (to paste in a dialog in the next step).
+
+In the left pane, click Explorer, click + Add data > Star a project by name then paste the data-to-insights name.
+
+Click Star.
+
+The data-to-insights project is listed in the Explorer section.
+
+BigQuery query editor and query validator
+For each activity in the following sections, this lab provides queries with common errors for you to troubleshoot. The lab directs you what to look at and suggests how to correct the syntax and return meaningful results.
+
+To follow along with the troubleshooting and suggestions, copy and paste the query into the BigQuery query editor. If there are errors, you see a red exclamation point at the line containing the error and in the query validator (bottom corner).
+
+BigQuery Query editor
+
+If you run the query with the errors, the query fails and the error is specified in the Job information.
+
+Query failed infobox
+
+When the query is error free, you see a green checkmark in the query validator. When you see the green checkmark, click Run to run the query to view what you get for results.
+
+Green checkmark in the query validator
+
+Note: For information about syntax, see Standard SQL Query Syntax.
+Task 2. Find the total number of customers who went through checkout
+Your goal in this section is to construct a query that gives you the number of unique visitors who successfully went through the checkout process for your website. The data is in the rev_transactions table which your data analyst team has provided. They have also given you example queries to help you get started in your analysis but you're not sure they're written correctly.
+
+Note: All queries need to be executed and error-free to get the full score.
+Troubleshoot queries that contain query validator, alias, and comma errors
+Look at the below query and answer the following question:
+#standardSQL
+SELECT  FROM `data-to-inghts.ecommerce.rev_transactions` LIMIT 1000
+Copied!
+
+What's wrong with the previous query to view 1000 items?
+
+We have not specified any columns in the SELECT
+
+We are using legacy SQL
+
+There is a typo in the dataset name
+
+There is a typo in the table name
+
+What about this updated query?
+#standardSQL
+SELECT * FROM [data-to-insights:ecommerce.rev_transactions] LIMIT 1000
+Copied!
+
+What's wrong with the new previous query to view 1000 items?
+There is a typo in the table name
+We are using legacy SQL
+We have not specified any columns in the SELECT
+There is a typo in the dataset name
+
+What about this query that uses Standard SQL?
+#standardSQL
+SELECT FROM `data-to-insights.ecommerce.rev_transactions`
+Copied!
+
+What is wrong with the previous query?
+SELECT clause is returning all columns which leads to poor performance
+We are still using legacy SQL
+We are missing an ORDER BY clause
+Still no columns defined in SELECT
+
+What about now? This query has a column:
+#standardSQL
+SELECT
+fullVisitorId
+FROM `data-to-insights.ecommerce.rev_transactions`
+Copied!
+
+What is wrong with the previous query?
+
+The page title is missing from the columns in SELECT
+
+We are missing a LIMIT clause
+
+Without aggregations, limits, or sorting, this query is not insightful
+
+We are missing a column alias
+
+What about now? The following query has a page title:
+#standardSQL
+SELECT fullVisitorId hits_page_pageTitle
+FROM `data-to-insights.ecommerce.rev_transactions` LIMIT 1000
+Copied!
+
+How many columns will the previous query return?
+2, columns named fullVisitorId and hits_page_pageTitle
+3 columns will be returned since we are missing a comma
+1, a column named hits_page_pageTitle
+0, the query will return an error
+
+What about now? The missing comma has been corrected.
+#standardSQL
+SELECT
+  fullVisitorId
+  , hits_page_pageTitle
+FROM `data-to-insights.ecommerce.rev_transactions` LIMIT 1000
+Copied!
+Answer: This returns results, but are you sure visitors aren't counted twice? Also, returning only one row answers the question of how many unique visitors reached checkout. In the next section you find a way to aggregate your results.
+
+Troubleshoot queries that contain logic errors, GROUP BY statements, and wildcard filters
+Aggregate the following query to answer the question: How many unique visitors reached checkout?
+#standardSQL
+SELECT
+  fullVisitorId
+  , hits_page_pageTitle
+FROM `data-to-insights.ecommerce.rev_transactions` LIMIT 1000
+Copied!
+What about this? An aggregation function, COUNT(), was added:
+#standardSQL
+SELECT
+COUNT(fullVisitorId) AS visitor_count
+, hits_page_pageTitle
+FROM `data-to-insights.ecommerce.rev_transactions`
+Copied!
+
+What is wrong with the previous query?
+
+A COUNT() function is used when SUM() should be used instead
+
+The COUNT() function does not de-deduplicate the same fullVisitorId
+
+It is missing a GROUP BY clause
+
+Nothing, it executes correctly
+
+In this next query, GROUP BY and DISTINCT statements were added:
+#standardSQL
+SELECT
+COUNT(DISTINCT fullVisitorId) AS visitor_count
+, hits_page_pageTitle
+FROM `data-to-insights.ecommerce.rev_transactions`
+GROUP BY hits_page_pageTitle
+Copied!
+Results Results table
+
+Great! The results are good, but they look strange.
+
+Filter to just "Checkout Confirmation" in the results:
+#standardSQL
+SELECT
+COUNT(DISTINCT fullVisitorId) AS visitor_count
+, hits_page_pageTitle
+FROM `data-to-insights.ecommerce.rev_transactions`
+WHERE hits_page_pageTitle = "Checkout Confirmation"
+GROUP BY hits_page_pageTitle
+Copied!
+Click Check my progress to verify the objective.
+Find the total number of customers went through checkout
+
+Task 3. List the cities with the most transactions with your ecommerce site
+Note: All queries need to be executed and error-free to get the full score.
+Troubleshoot ordering, calculated fields, and filtering after aggregating errors
+Complete the partially written query:
+SELECT
+geoNetwork_city,
+totals_transactions,
+COUNT( DISTINCT fullVisitorId) AS distinct_visitors
+FROM
+`data-to-insights.ecommerce.rev_transactions`
+GROUP BY
+Copied!
+Possible solution:
+
+#standardSQL
+SELECT
+geoNetwork_city,
+SUM(totals_transactions) AS totals_transactions,
+COUNT( DISTINCT fullVisitorId) AS distinct_visitors
+FROM
+`data-to-insights.ecommerce.rev_transactions`
+GROUP BY geoNetwork_city
+Copied!
+Update your previous query to order the top cities first.
+
+Which city had the most distinct visitors? Ignore the value: 'not available in this demo dataset'
+Los Angeles
+Mountain View
+Austin
+San Jose
+
+Possible solution:
+
+#standardSQL
+SELECT
+geoNetwork_city,
+SUM(totals_transactions) AS totals_transactions,
+COUNT( DISTINCT fullVisitorId) AS distinct_visitors
+FROM
+`data-to-insights.ecommerce.rev_transactions`
+GROUP BY geoNetwork_city
+ORDER BY distinct_visitors DESC
+Copied!
+Update your query and create a new calculated field to return the average number of products per order by city.
+Possible solution:
+
+#standardSQL
+SELECT
+geoNetwork_city,
+SUM(totals_transactions) AS total_products_ordered,
+COUNT( DISTINCT fullVisitorId) AS distinct_visitors,
+SUM(totals_transactions) / COUNT( DISTINCT fullVisitorId) AS avg_products_ordered
+FROM
+`data-to-insights.ecommerce.rev_transactions`
+GROUP BY geoNetwork_city
+ORDER BY avg_products_ordered DESC
+Copied!
+Results
+
+Results table
+
+Filter your aggregated results to only return cities with more than 20 avg_products_ordered.
+
+What's wrong with the following query?
+#standardSQL
+SELECT
+geoNetwork_city,
+SUM(totals_transactions) AS total_products_ordered,
+COUNT( DISTINCT fullVisitorId) AS distinct_visitors,
+SUM(totals_transactions) / COUNT( DISTINCT fullVisitorId) AS avg_products_ordered
+FROM
+`data-to-insights.ecommerce.rev_transactions`
+WHERE avg_products_ordered > 20
+GROUP BY geoNetwork_city
+ORDER BY avg_products_ordered DESC
+Copied!
+
+What is wrong with the previous query?
+
+Nothing, it executes correctly
+
+You cannot filter on aliased fields within the `WHERE` clause
+
+You cannot filter aggregated fields in the `WHERE` clause (use `HAVING` instead)
+
+You cannot divide non-similar aggregate functions
+
+Possible solution:
+
+#standardSQL
+SELECT
+geoNetwork_city,
+SUM(totals_transactions) AS total_products_ordered,
+COUNT( DISTINCT fullVisitorId) AS distinct_visitors,
+SUM(totals_transactions) / COUNT( DISTINCT fullVisitorId) AS avg_products_ordered
+FROM
+`data-to-insights.ecommerce.rev_transactions`
+GROUP BY geoNetwork_city
+HAVING avg_products_ordered > 20
+ORDER BY avg_products_ordered DESC
+Copied!
+Click Check my progress to verify the objective.
+List the cities with the most transactions with your ecommerce site
+
+Task 4. Find the total number of products in each product category
+Note: All queries need to be executed and error-free to get the full score.
+Find the top selling products by filtering with NULL values
+What's wrong with the following query? How can you fix it?
+#standardSQL
+SELECT hits_product_v2ProductName, hits_product_v2ProductCategory
+FROM `data-to-insights.ecommerce.rev_transactions`
+GROUP BY 1,2
+Copied!
+
+What is wrong with the previous query?
+
+Nothing, it executes correctly
+
+There is a typo in the column name
+
+No aggregate functions are used
+
+Large GROUP BYs really hurt performance (consider filtering first and/or using aggregation functions)
+
+What is wrong with the following query?
+#standardSQL
+SELECT
+COUNT(hits_product_v2ProductName) as number_of_products,
+hits_product_v2ProductCategory
+FROM `data-to-insights.ecommerce.rev_transactions`
+WHERE hits_product_v2ProductName IS NOT NULL
+GROUP BY hits_product_v2ProductCategory
+ORDER BY number_of_products DESC
+Copied!
+
+What is wrong with the previous query which lists products?
+Nothing, the query executes correctly
+The COUNT() function is not the distinct number of products in each category
+The GROUP BY contains an incorrect column
+The WHERE clause should include NULL Product Names
+
+Update the previous query to only count distinct products in each product category.
+Possible solution:
+
+#standardSQL
+SELECT
+COUNT(DISTINCT hits_product_v2ProductName) as number_of_products,
+hits_product_v2ProductCategory
+FROM `data-to-insights.ecommerce.rev_transactions`
+WHERE hits_product_v2ProductName IS NOT NULL
+GROUP BY hits_product_v2ProductCategory
+ORDER BY number_of_products DESC
+LIMIT 5
+Copied!
+
+Which category has the most distinct number of products offered?
+Office
+${productitem.product.origCatName}
+Electronics
+(not set)
+
+Note:
+(not set) could indicate the product has no category
+${productitem.product.origCatName} is front-end code to render the category which may indicate the Google Analytics tracking script is firing before the page is fully-rendered
+
