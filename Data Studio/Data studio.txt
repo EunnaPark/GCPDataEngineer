@@ -1,0 +1,15 @@
+Overview
+Data Studio turns your data into informative dashboards and reports that are easy to read, easy to share, and fully customizable. Dashboarding allows you to tell great data stories to support better business decisions.
+
+BigQuery is Google's fully managed, NoOps, low cost analytics database. With BigQuery you can query terabytes and terabytes of data without having any infrastructure to manage or needing a database administrator. BigQuery uses SQL and can take advantage of the pay-as-you-go model. BigQuery allows you to focus on analyzing data to find meaningful insights.
+
+The dataset used in this lab is an ecommerce dataset that has millions of Google Analytics records for the Google Merchandise Store loaded into BigQuery. You will explore the available fields and rows of the dataset for insights.
+
+This lab focuses on how to create new reports and explore your ecommerce dataset visually for insights.
+
+What you'll learn
+In this lab, you learn how to:
+
+Launch Data Studio.
+Create and customize a report.
+Create an interactive filter for your report.
