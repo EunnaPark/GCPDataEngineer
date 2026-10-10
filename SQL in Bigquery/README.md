@@ -30,4 +30,4 @@ Original new `.txt` files remain alongside these guides for complete context, in
 
 ## COVID-19 challenge practice — 2026-10-09
 
-[Ten answers and study notes](COVID-CHALLENGE-STUDY.md), with each submitted answer below its task summary, and [reusable SQL](covid-challenge-answers.sql). Official question wording and grader outcomes remain unconfirmed.
+[Ten answers and study notes](COVID-CHALLENGE-STUDY.md), with each submitted answer below its task summary, and [reusable SQL](covid-challenge-answers.sql). The [supplied course instructions](BigQuery%20-%20Challenge%20Lab.txt) are connected to each answer. Grader outcomes remain unconfirmed; alias, date, and report requirements are noted in the guide.
