@@ -120,3 +120,7 @@ This is a course study record. It currently demonstrates the intended Explore wo
 ## Related study
 
 The separate [Data Studio folder](../Data%20Studio/README.md) documents the BigQuery sales_report dashboard and its resolved connection issue. That issue is not assumed to apply to this Looker instance.
+
+## Additional Looker study — 2026-10-10
+
+[Different Explores and Merged Results](MERGED-RESULTS-STUDY.md) connects the new instructions to the learner screenshot, documents the visible null elevations, and separates observed configuration from pending validation. [Flight export notes](FLIGHT-EXPORTS.md) link the two separate result exports. The execution status above refers to the original airport-visualization lab, not every artifact in this folder.

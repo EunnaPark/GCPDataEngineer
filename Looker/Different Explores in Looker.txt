@@ -1,0 +1,132 @@
+Overview
+Explores in Looker are designed by your Looker developers to combine the data from your database tables in the best way, using defined relationships between data fields and tables. Because of this, it is best to use a single Explore to examine your data.
+
+However, there may be times when your Looker developers haven’t created the relationships you need, or they faced technical limitations. In these cases, Looker lets you combine data from different Explores (even from different models or projects) to create data tables and visualizations.
+
+Using the Merged Results feature, you can create a query from an Explore and then add queries from other Explores to display the merged results in a single table. From there, you can examine the data, pivot fields, and create visualizations.
+
+Note: The Merged Results feature has a limit of 5,000 rows of data for each of the merged queries. If you include queries that return more than 5,000 rows of data, only the first 5,000 rows returned are included in the merged results.
+When you merge queries, you start out by creating a single query from a single Explore, and then you combine other queries with that first query.
+
+By default, that first query is considered the primary query. This is an important concept because when Looker matches the data to create the merged results, it matches each added query to the primary query (not to any other added query).
+
+So, whenever you add a query, you need to include a dimension that can be matched to a dimension in the primary query.
+
+Learn more about merged results from the Merging results from different Explores documentation.
+
+Objectives
+In this lab, you learn how to merge results from different explores by doing the following:
+
+Create a primary query and a next source query
+Check merge results and run a merge
+Edit the merged results
+Save your merged results to a dashboard
+
+
+Task 1. Create a primary query
+To merge the results from multiple queries, you start with a beginning query, which is considered the primary query.
+
+In the Looker navigation menu, click Explore. Under FAA, click Flights.
+
+In the left pane, under All Fields, expand Flight Details.
+
+Click Carrier and Flight Num.
+
+You can reorder selected fields in the right pane by dragging and dropping the field name.
+
+Expand Aircraft Origin and click City.
+
+Expand Flight Details and in MEASURES, click Cancelled Count.
+
+Expand Arrival Date, hover over Year, and click Filter by field.
+
+Expanded Arrival Date dropdown menu with filter button highlighted on the Year option
+
+In the Filters pane, set Flights Details Arrival Year to is in the year, and enter 2000.
+
+Click Run to see the results of the primary query.
+
+You'll see the results of flight details and total cancellations for flights in the year 2000.
+
+Task 2. Add the next source query
+Once you've created your primary query, you can add another source query. Now that we have flight data, let's merge it with airport information for the flight airport of origin.
+
+In the top right pane of the Explore for your primary query, click Settings (Settings/gear icon).
+
+Click Merge Results. This will open the Choose an Explore window.
+
+Looker opens the Explore in the Edit Query window, where you can build the new query to be merged into your primary query.
+
+Note: To merge queries, Looker finds dimensions in the queries whose values can be matched. Be sure that your queries contain at least one common dimension whose values can be matched exactly.
+For example, if both queries have a Date dimension, but one query uses “2017-10-01” as a value and the other query uses “October 2017” as a value, Looker can’t use that dimension to merge the queries.
+In the Choose an Explore window, click Airports.
+
+In the All Fields pane, click City and Average Elevation.
+
+Note: When creating a source query for merged results, be sure to include at least one dimension that will exactly match a dimension in the primary query.
+Click Run to see the results of the source query.
+
+The results show the City and Average Elevation for airports.
+
+Click Save to merge the query into your primary query.
+
+Task 3. Check the merge rules and run the merge
+Looker automatically finds the best dimensions to use for matching the queries and displays these matches in the Merge Rules section. Looker shows how each query will be merged with the primary query.
+
+Review the dimensions that Looker used to match the queries. Your Primary search on Flights should be using Aircraft Origin City to merge by the Secondary search of Airports on Airports City.
+
+Change the dropdowns so that the correct dimensions are used in the merge rule.
+
+Merge Rules section with Aircraft Origin City selected in the Flights field and Airports City selected in the Airports field
+
+Click Run to view the results of your merged results.
+
+Click on Airports Average Elevation to sort the values in descending order.
+
+Expand the Visualization pane and click on the different chart options to explore useful visualizations for your merged results.
+
+Task 4. Edit the merged results
+Once you have your merged results, you still have the flexibility to edit the merged queries and the rules used to merge the queries.
+
+Edit the primary source query
+Let's add information about the destination airports to the source query.
+
+In the Source Queries pane, click the gear icon next to Flights and then click Edit.
+
+There should be a label Primary next to the gear icon.
+
+In the left pane, click All Fields.
+
+Expand Aircraft Destination and click City.
+
+Click Run to view the results of your modified primary query.
+
+Click Save to save the primary source query.
+
+Task 5. Save your merged results to a dashboard
+Expand the Visualization pane and select Table.
+
+Visualization pane displaying table
+
+In the top right pane of the Explore for your Merged Results, click the gear icon.
+
+Click Save to Dashboard.
+
+For Title, type Flight Cancellations & Elevation.
+
+Click New Dashboard.
+
+Add to a Dashboard in this folder window with New Dashboard button highlighted
+
+For the dashboard name, type Airport Data and click OK.
+
+Airport Data entered in the Enter the new Dashboard name field. The OK button is highlighted.
+
+Click Save to Dashboard.
+
+In the green banner in the top pane, click the link to Airport Data to access your new dashboard.
+
+You can also get to your new dashboard by clicking Folders > Shared Folders and clicking your dashboard.
+
+Airport Data dashboard
+

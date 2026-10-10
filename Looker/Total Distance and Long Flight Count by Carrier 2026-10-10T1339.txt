@@ -1,0 +1,14 @@
+Name	Count Long Flight	Total Distance
+Delta Air Lines                                             	1,155,194	3,664,796,433
+Southwest Airlines                                          	776,313	3,234,195,727
+US Airways                                                  	479,938	2,096,458,739
+Alaska Airlines                                             	213,905	796,547,042
+Continental Express Airlines                                	90,536	562,503,035
+Airtran Airways Corporation                                 	33,887	315,469,830
+American Eagle Airlines                                     	27,140	773,580,687
+Atlantic Southeast Airlines                                 	23,183	367,922,977
+Hawaiian Airlines                                           	19,299	61,220,476
+Comair (Delta Connections)                                  	13,029	346,784,364
+Sky West Airlines                                           	12,763	484,323,347
+Atlantic Coast Airlines                                     	3,509	259,761,057
+Aloha Airlines                                              	2,303	14,115,236
