@@ -27,3 +27,7 @@ Original new `.txt` files remain alongside these guides for complete context, in
 ## Additional course record — 2026-10-09
 
 [BigQuery: Troubleshooting Common SQL Errors](TROUBLESHOOTING-COMMON-SQL-ERRORS.md) reviews familiar SQL syntax and aggregation concepts. Retained as a course taken, with [corrected SQL examples](troubleshooting-common-errors.sql); it is not presented as a new independent portfolio project.
+
+## COVID-19 challenge practice — 2026-10-09
+
+[Ten answers and study notes](COVID-CHALLENGE-STUDY.md), with each submitted answer below its task summary, and [reusable SQL](covid-challenge-answers.sql). Official question wording and grader outcomes remain unconfirmed.
