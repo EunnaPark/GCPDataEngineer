@@ -78,7 +78,14 @@ There is a typo in the dataset name
 What about this query that uses Standard SQL?
 #standardSQL
 SELECT FROM `data-to-insights.ecommerce.rev_transactions`
-Copied!
+--->Syntax error: SELECT list must not be empty at [2:9]
+--->Access Denied: Table data-to-inghts:ecommerce.rev_transactions: User does not have permission to query table data-to-inghts:ecommerce.rev_transactions, or perhaps it does not exist.
+
+Project: data-to-inghts
+
+bigquery.tables.getData
+
+
 
 What is wrong with the previous query?
 SELECT clause is returning all columns which leads to poor performance
