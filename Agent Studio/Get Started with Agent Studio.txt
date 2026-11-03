@@ -1,0 +1,17 @@
+Overview
+Agent Platform is a comprehensive machine learning development platform that provides both predictive and generative AI capabilities. It allows you to train, evaluate, and deploy predictive machine learning models for forecasting purposes. Additionally, you can utilize the platform to discover, tune, and serve generative AI models to produce content. For instance, insurance companies constantly seek to improve efficiency in areas like claims processing and risk assessment. Agent Studio offers a powerful way to rapidly prototype generative AI solutions for such challenges.
+
+Explore other content in the Gemini Enterprise Agent Ready (GEAR) program.
+
+Agent Studio lets you quickly test and customize generative AI models so you can leverage their capabilities in your applications. It provides a variety of tools and resources, including an intuitive user interface (UI), that make it easy to start with generative AI, even if you don't have an extensive background in machine learning.
+
+This lab guides you through Agent Studio, where you'll unlock the potential of cutting-edge generative AI models like Gemini. You will step into the role of helping an insurance company prototype a risk analysis assistant. You'll learn how to take a prompt idea towards a deployable application, design sophisticated prompts to achieve specific generative outcomes, and use multimodal capabilities to analyze various types of data, including images—all directly in the Google Cloud console. No need for APIs or Python SDKs for these core tasks.
+
+Objectives
+In this lab, you learn how to:
+
+Create applications from prompts.
+Design effective prompts.
+Engineer and manage prompts.
+Use multimodal prompts.
+
