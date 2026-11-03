@@ -10,3 +10,5 @@
 Thumbs.db
 .vscode/
 .idea/
+.validation-deps/
+__pycache__/
